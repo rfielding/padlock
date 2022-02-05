@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 )
 
 func AsSpec(s string) (Spec, error) {
@@ -27,11 +28,18 @@ type Spec struct {
 	Label      string          `json:"label"`
 	Foreground string          `json:"fg,omitempty"`
 	Background  string          `json:"bg,omitempty"`
-	Cases      map[string]Case `json:"cases"`
+	Cases      map[string]Case `json:"cases,omitempty"`
+	Unlocks []Unlock `json:"unlocks,omitempty"`
+}
+
+type Unlock struct {
+	Key string `json:"key,omitempty"`
+	And []string `json:"and,omitempty"`
 }
 
 type Case struct {
-	Keys []string `json:"keys"`
+	Diff big.Int `json:"diff"`
+	Key string `json:"key"`
 	Expr Expr     `json:"expr"`
 }
 
@@ -58,7 +66,7 @@ func (s Spec) Normalize() (Spec, error) {
 		// Make the case into Or over And
 		if len(n.Or) > 0 {
 			r.Cases[k] = Case{
-				Keys: v.Keys, 
+				Key: v.Key, 
 				Expr: n,
 			}
 			continue
@@ -66,7 +74,7 @@ func (s Spec) Normalize() (Spec, error) {
 		// If it's And, wrap it in Or
 		if len(n.And) > 0 {
 			r.Cases[k] = Case{
-				Keys: v.Keys,
+				Key: v.Key,
 				Expr: Expr{
 					Or: []Expr{n},
 				},
@@ -76,7 +84,7 @@ func (s Spec) Normalize() (Spec, error) {
 		// If it's Is, wrap it in Or over And
 		if len(n.Is) > 0 {
 			r.Cases[k] = Case{
-				Keys: v.Keys,
+				Key: v.Key,
 				Expr: Expr{
 					Or: []Expr{
 						Expr{
@@ -91,6 +99,23 @@ func (s Spec) Normalize() (Spec, error) {
 		}
 		return r,fmt.Errorf("spec validation: should be one of Or,And,Is,Some,Every")
 	}
+	// Flatten out the Or over And over Is per Keys, into list of Keys,List[Is]
+	for k,_ := range r.Cases{
+		for i := 0; i < len(r.Cases[k].Expr.Or); i++ {
+			items := make([]string,0)
+			for j := 0; j < len(r.Cases[k].Expr.Or[i].And); j++ {
+				items = append(items, r.Cases[k].Expr.Or[i].And[j].Is)
+			}
+			r.Unlocks = append(
+				r.Unlocks,
+				Unlock{
+					Key: r.Cases[k].Key,
+					And: items,
+				},
+			)
+		}
+	}
+	r.Cases = nil
 	return r, nil
 }
 
@@ -301,21 +326,21 @@ func main() {
 		"fg": "white",
 		"bg": "black",
 		"cases": {
-			"isAdultCit": {
-				"keys": ["R"],
-				"expr": {
-					"and": [
-						{"some": ["citizenship", "US", "NL"]},
-						{"every": ["age", "adult", "driving"]}
-					]
-				}
-			},
 			"isOwner": {
-				"keys": ["W","R"],
+				"key": "W",
 				"expr": {
 					"and": [
 						{"requires": "isAdultCit"},
 						{"some": ["email","rob.fielding@gmail.com","rrr00bb@yahoo.com"]}
+					]
+				}
+			},
+			"isAdultCit": {
+				"key": "R",
+				"expr": {
+					"and": [
+						{"some": ["citizenship", "US", "NL"]},
+						{"every": ["age", "adult", "driving"]}
 					]
 				}
 			}
