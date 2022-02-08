@@ -38,7 +38,7 @@ The language is in JSON for defining the padlocks, like this:
 		}
 	}
 }
-`
+```
 
 > Lablled with ADULT with black background and white font.  To calculate a Read key, you must be an adult citizen of the right countries, you must be a citizen of US or NL, and not a citizen of SA (to comply with some laws they have).  You must be of age adult and age driving.  The owner of this file can calculate a Write key as long as his email os rob.fielding@gmail.com or rrr00bb@yahoo.com
 
