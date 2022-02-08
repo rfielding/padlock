@@ -186,6 +186,10 @@ The language is limited to Monotone expressions, where negated facts can be asse
 
 The various unlock cases require fields `and` together.  The value `k` is xored with a cryptographic operation on the `and` items, to product the actual target key.  Each file has a public key `pubf` that allows padlocks to be created without any certificates, or targeting any particular user.
 
+- When all items in `and` are passed through a function, the chosen `Key` is ultimately generated.  `Xor(k, Pair( sum_i[and_i], pubf)) == Read` is roughly how it's computed.
+- This effectively gives us cryptographic enforcement of Read/Write privilege, for monotone (ie: `and` and `or` combinations with limited negation of individual facts) expressions.  This limitation exists because the witnesses are hashes of attributes signed with `capub` private key.
+
+
 ## TODO
 
 The CA system still needs to be written, something I have done before in a different project `cpabe`.
