@@ -216,4 +216,32 @@ Where the actual `(X,Y)` values that the CA generated were used to create the cu
 - `(2,L[2])`
 - `(3,L[3])`
 
+
+A user presents a list of attributes to be signed:
+
+```json
+{
+  "and": [
+    "citizenship:US",
+    "age:adult",
+    "email:bob@gmail.com"
+  ]
+}
+
+
 Because any three points would produce the same curve with the same `(0,L[0])`.  This means that the `X` that represents the attribute like `H(attribute_i)`, and `Y` represents the signed attribute that can only be produced by the CA `s H(attribute_i)`.  Padlocks are produced like `Pair(f P_0 + f P_1 + ..., s Q)`, and users unlock them like `Pair(s P_0 + s P_1 + ..., f Q)`.  The two ways produce the same value, allowing for the same key to be derived ; because `f` and `s` can be swapped in the equation.
+
+
+
+For each item requested, and possibly more, the CA calculates:
+
+```
+P_0 = citizenship:US      =>  s H1(citizenship:US)
+P_1 = age:adult           =>  s H1(age:adult)
+P_2 = email:bob@gmail.com =>  s H1(email:bob@gmail.com)
+```
+
+And calculate the polynomial `L[x]` given the points.  Once the points are plugged in, a new set of points `L[1],L[2],L[3]` can be substituted for the original.
+
+Now, when plugging into a padlock `L[ H[citizenship:US] ]` can be looked up.  Some value will come back.  It won't be clear whether that value is correct or incorrect.  If it is correct, then it produces the correct key when all attributes are corret.  TODO: store a hash of the expected key, so we know when the value is wrong.
+
