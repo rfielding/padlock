@@ -104,10 +104,10 @@ func (s Spec) Normalize() (Spec, error) {
 	for k,_ := range r.Cases{
 		for i := 0; i < len(r.Cases[k].Expr.Or); i++ {
 			items := make([]string,0)
-			for j := 0; j < len(r.Cases[k].Expr.Or[i].And); j++ {
-				v := r.Cases[k].Expr.Or[i].And[j].Is
+			a := r.Cases[k].Expr.Or[i].FlatAnd()
+			for j := 0; j < len(a.And); j++ {
+				v := a.And[j].Is
 				items = append(items, v)
-				///*
 				if len(v) == 0 {
 					panic(
 						fmt.Errorf(
@@ -116,7 +116,6 @@ func (s Spec) Normalize() (Spec, error) {
 						),
 					)
 				}
-				//*/
 			}
 			r.Unlocks = append(
 				r.Unlocks,
@@ -127,7 +126,7 @@ func (s Spec) Normalize() (Spec, error) {
 			)
 		}
 	}
-//	r.Cases = nil
+	r.Cases = nil
 	return r, nil
 }
 
@@ -350,9 +349,9 @@ func (e Expr) FlatAnd() Expr {
 				}
 			} else if len(e.And[i].Or) > 0 {
 				r.And = append(r.And, e.And[i].FlatOr())
-			} else {
-				r.And = append(r.And, e.And[i].FlatAnd())
-			}
+			} else { 
+				r.And = append(r.And, e.And[i])
+			} 
 		}
 		return	r
 	}
@@ -379,6 +378,7 @@ func main() {
 				"expr": {
 					"and": [
 						{"some": ["citizenship", "US", "NL"]},
+						{"every": ["citizenship", "!NK", "!IR"]},
 						{"every": ["age", "adult", "driving"]}
 					]
 				}
