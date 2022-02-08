@@ -202,4 +202,4 @@ For example, encode each signed attribute into a polynomial.  Then use Lagrange 
 
 ![lagrange polynomial](https://render.githubusercontent.com/render/math?math=\color{blue}L[x]=\sum_j%20Y_j[\prod_i^{i%20\ne%20j}\frac{x%20-%20X_j}{X_i%20-%20X_j}])
 
-Replacing all `X_i` with `0,1,2,3,...` can hide the original points, while still pinning down the curve.  The curve ends up being a sort of MAC that we choose some points, and let others be arbitrary.
+Replacing all `X_i` with `0,1,2,3,...` can hide the original points, while still pinning down the curve.  The curve ends up being a sort of MAC that we choose some points, and let others be arbitrary. It is a certificate as well.   
