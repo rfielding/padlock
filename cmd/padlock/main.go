@@ -1,18 +1,75 @@
 package main
 
 import (
-	"sort"
+	//"github.com/cloudflare/circl/group"
 	"encoding/json"
 	"fmt"
+	ec "github.com/cloudflare/circl/ecc/bls12381"
+	"github.com/cloudflare/circl/ecc/bls12381/ff"
 	"log"
-	"math/big"
+	"sort"
+	//"math/big"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 )
 
-func AsSpec(s string) (Spec, error) {
+func H1(s string) *ec.G1 {
+	v := ec.G1Generator()
+	v.Hash([]byte(s), nil)
+	return v
+}
+
+func Hs(s string) *ff.Scalar {
+	h := sha256.Sum256([]byte(s))
+	k := new(ff.Scalar)
+	k.SetBytes(h[:])
+	return k
+}
+
+func S(s *ff.Scalar, p *ec.G1) *ec.G1 {
+	g := ec.G1Generator()
+	g.ScalarMult(s, p)
+	return g
+}
+
+func R() *ff.Scalar {
+	r := new(ff.Scalar)
+	r.Random(rand.Reader)
+	return r
+}
+
+func CA(s *ff.Scalar) *ec.G2 {
+	q := ec.G2Generator()
+	q.ScalarMult(s, q)
+	return q
+}
+
+func AsSpec(s string, pub *ec.G2, targets map[string][32]byte) (Spec, error) {
+	// Parse the lock specification
 	var e Spec
 	err := json.Unmarshal([]byte(s), &e)
 	if err != nil {
 		return e, fmt.Errorf("parse error: %v", err)
+	}
+	e.Targets = targets
+	e, err = e.Normalize()
+	if err != nil {
+		return e, err
+	}
+	// Pair(sum_i[ f H1(a_i)], pub)
+	f := R()
+	for u, _ := range e.Unlocks {
+		p := ec.G1Generator()
+		for i := 0; i < len(e.Unlocks[u].And); i++ {
+			p.Add(p, H1(e.Unlocks[u].And[i]))
+			p.ScalarMult(f, p)
+		}
+		pt := ec.Pair(p, pub)
+		// xor this secret with the target
+		e.Unlocks[u].Pt = []byte(Hs(pt.String()).String())
+		e.Unlocks[u].Pf = p
+		fmt.Printf("\n%v %s:\n%s\n%v\n", e.Unlocks[u].And,e.Unlocks[u].Key,hex.EncodeToString(e.Unlocks[u].Pt))
 	}
 	return e, nil
 }
@@ -26,30 +83,34 @@ func AsJson(v interface{}) string {
 }
 
 type Spec struct {
-	Label      string          `json:"label"`
-	Foreground string          `json:"fg,omitempty"`
-	Background  string          `json:"bg,omitempty"`
-	Cases      map[string]Case `json:"cases,omitempty"`
-	Unlocks []Unlock `json:"unlocks,omitempty"`
+	Label      string              `json:"label"`
+	Foreground string              `json:"fg,omitempty"`
+	Background string              `json:"bg,omitempty"`
+	Cases      map[string]Case     `json:"cases,omitempty"`
+	Unlocks    []Unlock            `json:"unlocks,omitempty"`
+	Targets    map[string][32]byte `json:"-"`
+	Pub        *ec.G2              `json:"pub,omitempty"`
 }
 
 type Unlock struct {
-	Key string `json:"key,omitempty"`
+	Key string   `json:"key,omitempty"`
 	And []string `json:"and,omitempty"`
+	Pt  []byte   `json:"pt,omitempty"`
+	Pf  *ec.G1   `json:"pf,omitempty"`
 }
 
 type Case struct {
-	Diff big.Int `json:"diff"`
-	Key string `json:"key"`
-	Expr Expr     `json:"expr"`
+	Diff *ff.Scalar `json:"diff"`
+	Key  string     `json:"key"`
+	Expr Expr       `json:"expr"`
 }
 
 type Expr struct {
-	And       []Expr   `json:"and,omitempty"`
-	Or        []Expr   `json:"or,omitempty"`
-	Is        string   `json:"is,omitempty"`
-	Some      []string `json:"some,omitempty"`
-	Every     []string `json:"every,omitempty"`
+	And      []Expr   `json:"and,omitempty"`
+	Or       []Expr   `json:"or,omitempty"`
+	Is       string   `json:"is,omitempty"`
+	Some     []string `json:"some,omitempty"`
+	Every    []string `json:"every,omitempty"`
 	Requires string   `json:"requires,omitempty"`
 }
 
@@ -67,7 +128,7 @@ func (s Spec) Normalize() (Spec, error) {
 		// Make the case into Or over And
 		if len(n.Or) > 0 {
 			r.Cases[k] = Case{
-				Key: v.Key, 
+				Key:  v.Key,
 				Expr: n,
 			}
 			continue
@@ -98,12 +159,12 @@ func (s Spec) Normalize() (Spec, error) {
 			}
 			continue
 		}
-		return r,fmt.Errorf("spec validation: should be one of Or,And,Is,Some,Every")
+		return r, fmt.Errorf("spec validation: should be one of Or,And,Is,Some,Every")
 	}
 	// Flatten out the Or over And over Is per Keys, into list of Keys,List[Is]
-	for k,_ := range r.Cases{
+	for k, _ := range r.Cases {
 		for i := 0; i < len(r.Cases[k].Expr.Or); i++ {
-			items := make([]string,0)
+			items := make([]string, 0)
 			a := r.Cases[k].Expr.Or[i].FlatAnd()
 			for j := 0; j < len(a.And); j++ {
 				v := a.And[j].Is
@@ -111,7 +172,7 @@ func (s Spec) Normalize() (Spec, error) {
 				if len(v) == 0 {
 					panic(
 						fmt.Errorf(
-							"error in normalization of spec: %v", 
+							"error in normalization of spec: %v",
 							AsJson(r.Cases[k].Expr.Or[i]),
 						),
 					)
@@ -129,7 +190,6 @@ func (s Spec) Normalize() (Spec, error) {
 	r.Cases = nil
 	return r, nil
 }
-
 
 func (e Expr) IsConsistent() bool {
 	// Bomb out if it's not a single kind
@@ -152,7 +212,7 @@ func (e Expr) IsConsistent() bool {
 	if len(e.Every) > 0 {
 		consistency++
 	}
-	return consistency==1
+	return consistency == 1
 }
 
 func (e Expr) FlatDistribute(cases map[string]Case) (Expr, error) {
@@ -163,7 +223,7 @@ func (e Expr) FlatDistribute(cases map[string]Case) (Expr, error) {
 		}
 	}
 	if !hasAnOr {
-		return e,nil
+		return e, nil
 	}
 	r := Expr{}
 	k := 0
@@ -214,27 +274,26 @@ func (e Expr) FlatDistribute(cases map[string]Case) (Expr, error) {
 		}
 		r = r3
 	}
-	return r,nil
+	return r, nil
 }
 
-func (e Expr) Flat(cases map[string]Case) (Expr,error) {
+func (e Expr) Flat(cases map[string]Case) (Expr, error) {
 	var err error
 	if !e.IsConsistent() {
 		return e, fmt.Errorf("invalid expression: must be op Is,And,Or,Requires,Some,Every")
 	}
 
 	if len(e.Requires) > 0 {
-		c,ok := cases[e.Requires]
+		c, ok := cases[e.Requires]
 		if !ok {
 			return e, fmt.Errorf("invalid expression: op Requires not found")
 		}
-		e,err = c.Expr.Flat(cases)
+		e, err = c.Expr.Flat(cases)
 		if !ok {
-			return e, fmt.Errorf("invalid expression: cannot normalize Requires: %v",err)
+			return e, fmt.Errorf("invalid expression: cannot normalize Requires: %v", err)
 		}
 		return e, nil
 	}
-
 
 	if len(e.Some) > 0 {
 		r := Expr{}
@@ -276,13 +335,13 @@ func (e Expr) Flat(cases map[string]Case) (Expr,error) {
 			r.And = append(r.And, n)
 		}
 		// Sort with And > Or to make them adjacent
-		sort.Slice(r.And, func(i,j int) bool {
-			return len(r.And[i].And) > 0 && len(r.And[j].Or) > 0 
+		sort.Slice(r.And, func(i, j int) bool {
+			return len(r.And[i].And) > 0 && len(r.And[j].Or) > 0
 		})
 
 		r, err = r.FlatDistribute(cases)
 		if err != nil {
-			return r,err
+			return r, err
 		}
 
 		// It could be And or Or or Is at this point
@@ -300,7 +359,7 @@ func (e Expr) Flat(cases map[string]Case) (Expr,error) {
 	}
 
 	if len(e.Is) > 0 {
-		return e,nil
+		return e, nil
 	}
 
 	if len(e.Or) > 0 {
@@ -312,8 +371,8 @@ func (e Expr) Flat(cases map[string]Case) (Expr,error) {
 			}
 			r.Or = append(r.Or, n)
 		}
-		sort.Slice(r.Or, func(i,j int) bool {
-			return len(r.Or[i].And) > 0 && len(r.Or[j].Or) > 0 
+		sort.Slice(r.Or, func(i, j int) bool {
+			return len(r.Or[i].And) > 0 && len(r.Or[j].Or) > 0
 		})
 		return r, nil
 	}
@@ -324,7 +383,7 @@ func (e Expr) Flat(cases map[string]Case) (Expr,error) {
 func (e Expr) FlatOr() Expr {
 	if len(e.Or) > 0 {
 		r := Expr{}
-		for i := 0 ; i < len(e.Or); i++ {
+		for i := 0; i < len(e.Or); i++ {
 			if len(e.Or[i].Or) > 0 {
 				for j := 0; j < len(e.Or[i].Or); j++ {
 					r.Or = append(r.Or, e.Or[i].Or[j])
@@ -342,23 +401,27 @@ func (e Expr) FlatOr() Expr {
 func (e Expr) FlatAnd() Expr {
 	if len(e.And) > 0 {
 		r := Expr{}
-		for i := 0 ; i < len(e.And); i++ {
+		for i := 0; i < len(e.And); i++ {
 			if len(e.And[i].And) > 0 {
 				for j := 0; j < len(e.And[i].And); j++ {
 					r.And = append(r.And, e.And[i].And[j].FlatAnd())
 				}
 			} else if len(e.And[i].Or) > 0 {
 				r.And = append(r.And, e.And[i].FlatOr())
-			} else { 
+			} else {
 				r.And = append(r.And, e.And[i])
-			} 
+			}
 		}
-		return	r
+		return r
 	}
 	return e
 }
 
 func main() {
+	s := Hs("farkfark")
+	pub := CA(s)
+	W := sha256.Sum256([]byte("pencil"))
+	R := sha256.Sum256([]byte("paper"))
 	e, err := AsSpec(`{
 		"label": "ADULT",
 		"fg": "white",
@@ -384,14 +447,13 @@ func main() {
 				}
 			}
 		}
-	}`)
+	}`, pub, map[string][32]byte{
+		"W": W,
+		"R": R,
+	})
+
 	if err != nil {
 		panic(err)
 	}
-	n, err := e.Normalize()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("e: %s\n", AsJson(e))
-	fmt.Printf("eN: %s\n", AsJson(n))
+	fmt.Printf("eN: %s\n", AsJson(e))
 }
