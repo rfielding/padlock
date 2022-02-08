@@ -204,7 +204,7 @@ For example, encode each signed attribute into a polynomial.  Then use Lagrange 
 
 Replacing all `(X_i,Y_j)` with `(1,L[1]),(2,L[2]),(3,L[3]),...` can hide the original points, while still pinning down the curve.  The point `(0,L[0])` can be thought of as a hash of the certificate, as this point is determined by the others.  The curve ends up being a sort of MAC that we choose some points, and let others be arbitrary. It is a certificate as well.   
 
-For example, the CA issues a certificate with points:
+For example, the CA issues a certificate with points of the form `(v,L[v]):
 
 - `(42,L[42])`
 - `(55,L[55])`
