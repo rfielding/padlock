@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sort"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -104,7 +105,16 @@ func (s Spec) Normalize() (Spec, error) {
 		for i := 0; i < len(r.Cases[k].Expr.Or); i++ {
 			items := make([]string,0)
 			for j := 0; j < len(r.Cases[k].Expr.Or[i].And); j++ {
-				items = append(items, r.Cases[k].Expr.Or[i].And[j].Is)
+				v := r.Cases[k].Expr.Or[i].And[j].Is
+				items = append(items, v)
+				if len(v) == 0 {
+					panic(
+						fmt.Errorf(
+							"error in normalization of spec: %v", 
+							AsJson(r.Cases[k].Expr.Or[i]),
+						),
+					)
+				}
 			}
 			r.Unlocks = append(
 				r.Unlocks,
@@ -121,6 +131,8 @@ func (s Spec) Normalize() (Spec, error) {
 
 
 func (e Expr) Norm(cases map[string]Case) (Expr, error) {
+	var err error
+
 	// Bomb out if it's not a single kind
 	consistency := 0
 	if len(e.Is) > 0 {
@@ -146,15 +158,15 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 	}
 
 	if len(e.Requires) > 0 {
-		v,ok := cases[e.Requires]
+		c,ok := cases[e.Requires]
 		if !ok {
 			return e, fmt.Errorf("invalid expression: op Requires not found")
 		}
-		v2,err := v.Expr.Norm(cases)
+		e,err = c.Expr.Norm(cases)
 		if !ok {
 			return e, fmt.Errorf("invalid expression: cannot normalize Requires: %v",err)
 		}
-		return v2, nil
+		return e, nil
 	}
 
 	// Atomic term.  Just return it
@@ -162,8 +174,8 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 		return e, nil
 	}
 
-	r := Expr{}
 	if len(e.Every) > 0 {
+		r := Expr{}
 		if len(e.Every) == 1 {
 			return e, fmt.Errorf("invalid expression: op Eevery requires first value is a field")
 		}
@@ -176,8 +188,8 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 		return r, nil
 	}
 
-	r = Expr{}
 	if len(e.Some) > 0 {
+		r := Expr{}
 		if len(e.Some) == 1 {
 			return e, fmt.Errorf("invalid expression: op Some requires first value is a field")
 		}
@@ -191,32 +203,63 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 	}
 
 
-	// Normalize all Or args
-	r = Expr{}
-	for i := range e.Or {
-		n, err := e.Or[i].Norm(cases)
-		if err != nil {
-			return r, err
+	// It's recursive And and Or from here out
+	// Normalize e
+	r := Expr{ }
+
+	if len(e.And) > 0 {
+		for i := range e.And {
+			n, err := e.And[i].Norm(cases)
+			if err != nil {
+				return e, err
+			}
+			r.And = append(r.And, n)
 		}
-		r.Or = append(r.Or, n)
+		sort.Slice(r.And, func(i,j int) bool {
+			return len(r.And[i].And) > 0 && len(r.And[j].Or) > 0 
+		})
+		rf := Expr{}
+		for i := 0 ; i < len(r.And); i++ {
+			if len(r.And[i].And) > 0 {
+				for j := 0 ; j < len(r.And[i].And); j++ {
+					rf.And = append(rf.And, r.And[i].And[j])
+				}
+			} else {
+				rf.And = append(rf.And, r.And[i])
+			}
+		}
+		r = rf
 	}
-	if len(r.Or) > 0 {
-		return r.FlatOr(), nil
+
+	if len(e.Or) > 0 {
+		for i := range e.Or {
+			n, err := e.Or[i].Norm(cases)
+			if err != nil {
+				return e, err
+			}
+			r.Or = append(r.Or, n)
+		}
+		sort.Slice(r.Or, func(i,j int) bool {
+			return len(r.Or[i].And) > 0 && len(r.Or[j].Or) > 0 
+		})
+		rf := Expr{}
+		for i := 0 ; i < len(r.Or); i++ {
+			if len(r.Or[i].Or) > 0 {
+				for j := 0 ; j < len(r.Or[i].Or); j++ {
+					rf.Or = append(rf.Or, r.Or[i].Or[j])
+				}
+			} else {
+				rf.Or = append(rf.Or, r.Or[i])
+			}
+		}
+		r = rf
+		return r, nil
 	}
 
 	if len(e.And) == 0 {
-		return r, fmt.Errorf("invalid expression: should be And term")
+		return e, fmt.Errorf("should be And for this term")
 	}
 	
-	// Normalize all And args
-	r = Expr{}
-	for i := range e.And {
-		n, err := e.And[i].Norm(cases)
-		if err != nil {
-			return r, err
-		}
-		r.And = append(r.And, n)
-	}
 	// If there is more than one, then combine as much as possible,
 	// eliminating first arg as we do so
 	r2 := Expr{}
@@ -278,6 +321,9 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 			continue
 		}
 	}
+	/*
+	return r2,nil
+	*/
 	r3 := Expr{}
 	for i := 0; i < len(r2.Or); i++ {
 		r3.Or = append(r3.Or, r2.Or[i].FlatAnd())
