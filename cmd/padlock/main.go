@@ -142,6 +142,12 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	return e, nil
 }
 
+// Plug in a certificate and see what keys come back
+func (s *Spec) Unlock(cert Certificate) map[string][]byte {
+	// TODO
+	return nil
+}
+
 func Xor(t []byte, k []byte) []byte {
 	v := make([]byte, len(t))
 	for i := 0; i < len(t); i++ {
