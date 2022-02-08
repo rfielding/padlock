@@ -40,7 +40,7 @@ The language is in JSON for defining the padlocks, like this:
 }
 ```
 
-> Lablled with ADULT with black background and white font.  To calculate a Read key, you must be an adult citizen of the right countries, you must be a citizen of US or NL, and not a citizen of SA (to comply with some laws they have).  You must be of age adult and age driving.  The owner of this file can calculate a Write key as long as his email os rob.fielding@gmail.com or rrr00bb@yahoo.com
+> Lablled with ADULT with black background and white font.  To calculate a Read key, you must be an adult citizen of the right countries, you must be a citizen of US or NL, and not a citizen of SA (to comply with some laws they have).  You must be of age adult and age driving.  The owner of this file can calculate a Write key as long as his email is rob.fielding@gmail.com or rrr00bb@yahoo.com
 
 When creating the padlock, we must pass in the CA public key, and the target keys Read and Write that we wish to be able to generate.
 The language is limited to Monotone expressions, where negated facts can be asserted explicitly.  When loaded, the `some` clause flattens out to `or` logic, and `every` flattens out to `and` logic.  In `some` and `every`, the first token is the field name.  This makes it compact to create padlocks with lots of complicated cases.  When flattened out into straight logic, the padlock looks like this:
@@ -197,3 +197,5 @@ The CA system still needs to be written, something I have done before in a diffe
 - The certificate will be a curve that includes a bunch of points signed by the CA
 - The owner of the certificate doesn't necessarily know all of the points in the certificate, as some may be derogatory
 - A padlock can query the certificate for witnesses to values such as a witness of `citizen:NL`.
+
+For example, encode each signed attribute into a polynomial.  Then use Lagrange polynomials to make the certificate into a (public!) curve.  But the points that created the curve can be obfuscated by recreating the curve with just enough points from `0,1,2,3,...` to recreate the curve.  This offers plausible deniability on derogatory attributes.  If the attributes are not publicly guessable, then they can actually be hidden from the user.
