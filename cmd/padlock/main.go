@@ -14,6 +14,31 @@ import (
 	//"encoding/hex"
 )
 
+// !!! Problem: this curve keeps x,y,z members private, so I can't extract them
+// !!! I will need another way to blind the certificates
+// L[v] = sum_j [ Y_j * prod_i^{i != j}[(x - x_j)/(x_i - x_j)]
+func Lagrange(v *ff.Scalar, x []*ff.Scalar, y []*ff.Scalar) *ff.Scalar {
+	sum := new(ff.Scalar)
+	for j := 0 ; j < len(y); j++ {
+		prod := new(ff.Scalar)
+		prod.SetOne()
+		prod.Mul(prod, y[j])
+		for i := 0 ; i < len(x) ; i++ {
+			if i != j {
+				num := new(ff.Scalar)
+				num.Sub(v, x[j])
+				div := new(ff.Scalar)
+				div.Sub(x[i], x[j])
+				div.Inv(div)
+				prod.Mul(prod,num)
+				prod.Mul(prod,div)
+			}
+		}
+		sum.Add(sum,prod)
+	}
+	return sum
+}
+
 // This is a blinded certificate that has some number
 // of attributes in it.
 //
@@ -24,14 +49,21 @@ import (
 // Correct answers will be on the Elliptic Curve.
 //
 type Certificate struct {
-	L_x []*ff.Scalar
-	L_y []*ff.Scalar
+	Facts map[string][]byte
 }
 
 // Issue a certificate by calculating a map from known values to signed points,
 // where unknown values map to arbitrary points.
 func Issue(s *ff.Scalar, facts []string) (Certificate, error) {
-	return Certificate{}, nil
+	cert := Certificate{
+		Facts: make(map[string][]byte),
+	}
+	for j := 0; j < len(facts); j++ {
+		h := H1(facts[j])
+		h.ScalarMult(s, h)
+		cert.Facts[facts[j]] = h.Bytes()
+	}
+	return cert,nil
 }
 
 func H1(s string) *ec.G1 {
