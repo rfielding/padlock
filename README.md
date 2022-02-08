@@ -189,7 +189,7 @@ The various unlock cases require fields `and` together.  The value `k` is xored 
 - When all items in `and` are passed through a function, the chosen `Key` is ultimately generated.  `Xor(k, Pair( sum_i[and_i], pubf)) == Read` is roughly how it's computed.
 - This effectively gives us cryptographic enforcement of Read/Write privilege, for monotone (ie: `and` and `or` combinations with limited negation of individual facts) expressions.  This limitation exists because the witnesses are hashes of attributes signed with `capub` private key.
 
-!(pairing equation)(https://render.githubusercontent.com/render/math?math=\color{gray}\hat%20e[s%20H1_0%2Bs%20H1_1%2B\cdots,f%20G2]=\hat%20e[f%20H1_0%2Bf%20H1_1%2B\cdots,s%20G2])
+![pairing equation](https://render.githubusercontent.com/render/math?math=\color{gray}\hat%20e[s%20H1_0%2Bs%20H1_1%2B\cdots,f%20G2]=\hat%20e[f%20H1_0%2Bf%20H1_1%2B\cdots,s%20G2])
 
 The pairing swaps `s` and `f`.  This is a deterministic bit that is `xor` with another value to yield the key.
 
