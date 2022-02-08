@@ -40,7 +40,7 @@ The language is in JSON for defining the padlocks, like this:
 }
 ```
 
-> Lablled with ADULT with black background and white font.  To calculate a Read key, you must be an adult citizen of the right countries, you must be a citizen of US or NL, and not a citizen of SA (to comply with some laws they have).  You must be of age adult and age driving.  The owner of this file can calculate a Write key as long as his email is rob.fielding@gmail.com or rrr00bb@yahoo.com
+> Labeled with ADULT with black background and white font.  To calculate a Read key, you must be an adult citizen of the right countries, you must be a citizen of US or NL, and not a citizen of SA (to comply with some laws they have).  You must be of age adult and age driving.  The owner of this file can calculate a Write key as long as his email is rob.fielding@gmail.com or rrr00bb@yahoo.com
 
 When creating the padlock, we must pass in the CA public key, and the target keys Read and Write that we wish to be able to generate.
 The language is limited to Monotone expressions, where negated facts can be asserted explicitly.  When loaded, the `some` clause flattens out to `or` logic, and `every` flattens out to `and` logic.  In `some` and `every`, the first token is the field name.  This makes it compact to create padlocks with lots of complicated cases.  When flattened out into straight logic, the padlock looks like this:
@@ -189,6 +189,9 @@ The various unlock cases require fields `and` together.  The value `k` is xored 
 - When all items in `and` are passed through a function, the chosen `Key` is ultimately generated.  `Xor(k, Pair( sum_i[and_i], pubf)) == Read` is roughly how it's computed.
 - This effectively gives us cryptographic enforcement of Read/Write privilege, for monotone (ie: `and` and `or` combinations with limited negation of individual facts) expressions.  This limitation exists because the witnesses are hashes of attributes signed with `capub` private key.
 
+!(pairing equation)(https://render.githubusercontent.com/render/math?math=\color{gray}\hat%20e[s%20H1_0%2Bs%20H1_1%2B\cdots,f%20G2]=\hat%20e[f%20H1_0%2Bf%20H1_1%2B\cdots,s%20G2])
+
+The pairing swaps `s` and `f`.  This is a deterministic bit that is `xor` with another value to yield the key.
 
 ## TODO
 
