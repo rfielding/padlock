@@ -233,7 +233,7 @@ Because any three points would produce the same curve with the same `(0,L[0])`. 
 
 
 
-For each item requested, and possibly more, the CA calculates:
+The function `H1` is a point hash, not a simple hash on the input string.  It is a point in `G1`.  It is multiplies times the CA secret `s`.  For each item requested, and possibly more, the CA calculates:
 
 ```
 citizenship:US      => P_0 = s H1(citizenship:US)
