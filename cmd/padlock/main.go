@@ -14,6 +14,26 @@ import (
 	//"encoding/hex"
 )
 
+// This is a blinded certificate that has some number
+// of attributes in it.
+//
+// L[v] is a function that returns L[v] = (L_x[h],L_y[h]) such that h=H[v]
+// This is a way to do a 1D to 2D lagrange interpolated polynomial
+//
+// L[v] is an oracle that answers questions correctly when it knows, and wrongly when it does not.
+// Correct answers will be on the Elliptic Curve.
+//
+type Certificate struct {
+	L_x []*ff.Scalar
+	L_y []*ff.Scalar
+}
+
+// Issue a certificate by calculating a map from known values to signed points,
+// where unknown values map to arbitrary points.
+func Issue(s *ff.Scalar, facts []string) (Certificate, error) {
+	return Certificate{}, nil
+}
+
 func H1(s string) *ec.G1 {
 	v := ec.G1Generator()
 	v.Hash([]byte(s), nil)
@@ -442,8 +462,8 @@ func (e Expr) FlatAnd() Expr {
 }
 
 func main() {
-	s := Hs("farkfark")
-	pub := CA(s)
+	priv := Hs("farkfark")
+	pub := CA(priv)
 	W := sha256.Sum256([]byte("pencil"))
 	R := sha256.Sum256([]byte("paper"))
 	e, err := AsSpec(`{
@@ -480,4 +500,13 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("eN: %s\n", AsJson(e))
+
+	alice,err := Issue(
+		priv, 
+		[]string{"citizen:NL","email:rob.fielding@gmail.com"},
+	)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("alice: %s\n", AsJson(alice))
 }
