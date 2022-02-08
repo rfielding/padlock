@@ -20,6 +20,12 @@ func H1(s string) *ec.G1 {
 	return v
 }
 
+func Hsb(b []byte) *ff.Scalar {
+	h := sha256.Sum256(b)
+	k := new(ff.Scalar)
+	k.SetBytes(h[:])
+	return k
+}
 func Hs(s string) *ff.Scalar {
 	h := sha256.Sum256([]byte(s))
 	k := new(ff.Scalar)
@@ -67,7 +73,15 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 		}
 		pt := ec.Pair(p, capub)
 		// xor this secret with the target
-		e.Unlocks[u].K = Xor(targets[e.Unlocks[u].Key], []byte(Hs(pt.String()).String()))
+		v, err := pt.MarshalBinary()
+		if err != nil {
+			return e, err
+		}
+		v2, err := Hsb(v).MarshalBinary()
+		if err != nil {
+			return e, err
+		}
+		e.Unlocks[u].K = Xor(targets[e.Unlocks[u].Key], v2)
 		fP := ec.G1Generator()
 		fP.ScalarMult(f, fP)
 		e.Unlocks[u].Pubf = fP.Bytes()
@@ -438,7 +452,7 @@ func main() {
 		"bg": "black",
 		"cases": {
 			"isOwner": {
-				"key": "W",
+				"key": "Write",
 				"expr": {
 					"and": [
 						{"requires": "isAdultCit"},
@@ -447,19 +461,19 @@ func main() {
 				}
 			},
 			"isAdultCit": {
-				"key": "R",
+				"key": "Read",
 				"expr": {
 					"and": [
 						{"some": ["citizenship", "US", "NL"]},
-						{"every": ["citizenship", "!NK"]},
+						{"every": ["citizenship", "!SA"]},
 						{"every": ["age", "adult", "driving"]}
 					]
 				}
 			}
 		}
 	}`, pub, map[string][]byte{
-		"W": W[:],
-		"R": R[:],
+		"Write": W[:],
+		"Read":  R[:],
 	})
 
 	if err != nil {
