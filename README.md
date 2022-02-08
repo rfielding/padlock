@@ -236,9 +236,9 @@ Because any three points would produce the same curve with the same `(0,L[0])`. 
 For each item requested, and possibly more, the CA calculates:
 
 ```
-P_0 = citizenship:US      =>  s H1(citizenship:US)
-P_1 = age:adult           =>  s H1(age:adult)
-P_2 = email:bob@gmail.com =>  s H1(email:bob@gmail.com)
+citizenship:US      => P_0 = s H1(citizenship:US)
+age:adult           => P_1 = s H1(age:adult)
+email:bob@gmail.com => P_2 = s H1(email:bob@gmail.com)
 ```
 
 And calculate the polynomial `L[x]` given the points.  Once the points are plugged in, a new set of points `L[1],L[2],L[3]` can be substituted for the original.
