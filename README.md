@@ -200,4 +200,4 @@ The CA system still needs to be written, something I have done before in a diffe
 
 For example, encode each signed attribute into a polynomial.  Then use Lagrange polynomials to make the certificate into a (public!) curve.  But the points that created the curve can be obfuscated by recreating the curve with just enough points from `0,1,2,3,...` to recreate the curve.  This offers plausible deniability on derogatory attributes.  If the attributes are not publicly guessable, then they can actually be hidden from the user.
 
-![lagrange polynomial](https://render.githubusercontent.com/render/math?math=L[x]=\sum_j%20X_j[\prod_i^{i%20\ne%20j}\frac{x%20-%20X_j}{X_i%20-%20X_j}])
+![lagrange polynomial](https://render.githubusercontent.com/render/math?math=\color{blue}L[x]=\sum_j%20X_j[\prod_i^{i%20\ne%20j}\frac{x%20-%20X_j}{X_i%20-%20X_j}])
