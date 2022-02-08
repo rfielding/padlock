@@ -191,7 +191,7 @@ The various unlock cases require fields `and` together.  The value `k` is xored 
 
 ![pairing equation](https://render.githubusercontent.com/render/math?math=\color{gray}\hat%20e[s%20H1_0%2Bs%20H1_1%2B\cdots,f%20G2]=\hat%20e[f%20H1_0%2Bf%20H1_1%2B\cdots,s%20G2])
 
-The pairing swaps `s` and `f`.  This is a deterministic bit that is `xor` with another value to yield the key.
+The pairing swaps `s` and `f`.  This is a deterministic bit that is `xor` with another value to yield the key.  `s G2` is the public key of the CA.  `f G2` is the public key of the file.
 
 ## TODO
 
