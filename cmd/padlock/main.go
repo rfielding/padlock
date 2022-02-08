@@ -11,7 +11,7 @@ import (
 	//"math/big"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/hex"
+	//"encoding/hex"
 )
 
 func H1(s string) *ec.G1 {
@@ -45,7 +45,7 @@ func CA(s *ff.Scalar) *ec.G2 {
 	return q
 }
 
-func AsSpec(s string, pub *ec.G2, targets map[string][32]byte) (Spec, error) {
+func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	// Parse the lock specification
 	var e Spec
 	err := json.Unmarshal([]byte(s), &e)
@@ -58,20 +58,30 @@ func AsSpec(s string, pub *ec.G2, targets map[string][32]byte) (Spec, error) {
 		return e, err
 	}
 	// Pair(sum_i[ f H1(a_i)], pub)
-	f := R()
 	for u, _ := range e.Unlocks {
+		f := R()
 		p := ec.G1Generator()
 		for i := 0; i < len(e.Unlocks[u].And); i++ {
 			p.Add(p, H1(e.Unlocks[u].And[i]))
 			p.ScalarMult(f, p)
 		}
-		pt := ec.Pair(p, pub)
+		pt := ec.Pair(p, capub)
 		// xor this secret with the target
-		e.Unlocks[u].Pt = []byte(Hs(pt.String()).String())
-		e.Unlocks[u].Pf = p
-		fmt.Printf("\n%v %s:\n%s\n%v\n", e.Unlocks[u].And,e.Unlocks[u].Key,hex.EncodeToString(e.Unlocks[u].Pt))
+		e.Unlocks[u].K = Xor(targets[e.Unlocks[u].Key], []byte(Hs(pt.String()).String()))
+		fP := ec.G1Generator()
+		fP.ScalarMult(f, fP)
+		e.Unlocks[u].Pubf = fP.Bytes()
 	}
+	e.CAPub = capub.Bytes()
 	return e, nil
+}
+
+func Xor(t []byte, k []byte) []byte {
+	v := make([]byte, len(t))
+	for i := 0; i < len(t); i++ {
+		v[i] = t[i] ^ k[i]
+	}
+	return v
 }
 
 func AsJson(v interface{}) string {
@@ -83,20 +93,20 @@ func AsJson(v interface{}) string {
 }
 
 type Spec struct {
-	Label      string              `json:"label"`
-	Foreground string              `json:"fg,omitempty"`
-	Background string              `json:"bg,omitempty"`
-	Cases      map[string]Case     `json:"cases,omitempty"`
-	Unlocks    []Unlock            `json:"unlocks,omitempty"`
-	Targets    map[string][32]byte `json:"-"`
-	Pub        *ec.G2              `json:"pub,omitempty"`
+	Label      string            `json:"label"`
+	Foreground string            `json:"fg,omitempty"`
+	Background string            `json:"bg,omitempty"`
+	Cases      map[string]Case   `json:"cases,omitempty"`
+	Unlocks    []Unlock          `json:"unlocks,omitempty"`
+	Targets    map[string][]byte `json:"-"`
+	CAPub      []byte            `json:"capub,omitempty"`
 }
 
 type Unlock struct {
-	Key string   `json:"key,omitempty"`
-	And []string `json:"and,omitempty"`
-	Pt  []byte   `json:"pt,omitempty"`
-	Pf  *ec.G1   `json:"pf,omitempty"`
+	Key  string   `json:"key,omitempty"`
+	And  []string `json:"and,omitempty"`
+	K    []byte   `json:"k,omitempty"` // The secret! needs xor vs target
+	Pubf []byte   `json:"pubf,omitempty"`
 }
 
 type Case struct {
@@ -447,9 +457,9 @@ func main() {
 				}
 			}
 		}
-	}`, pub, map[string][32]byte{
-		"W": W,
-		"R": R,
+	}`, pub, map[string][]byte{
+		"W": W[:],
+		"R": R[:],
 	})
 
 	if err != nil {
