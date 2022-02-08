@@ -60,7 +60,7 @@ func (s Spec) Normalize() (Spec, error) {
 	r.Background = s.Background
 	r.Cases = make(map[string]Case)
 	for k, v := range s.Cases {
-		n, err := s.Cases[k].Expr.Norm(s.Cases)
+		n, err := s.Cases[k].Expr.Flat(s.Cases)
 		if err != nil {
 			return s, err
 		}
@@ -107,6 +107,7 @@ func (s Spec) Normalize() (Spec, error) {
 			for j := 0; j < len(r.Cases[k].Expr.Or[i].And); j++ {
 				v := r.Cases[k].Expr.Or[i].And[j].Is
 				items = append(items, v)
+				///*
 				if len(v) == 0 {
 					panic(
 						fmt.Errorf(
@@ -115,6 +116,7 @@ func (s Spec) Normalize() (Spec, error) {
 						),
 					)
 				}
+				//*/
 			}
 			r.Unlocks = append(
 				r.Unlocks,
@@ -125,14 +127,12 @@ func (s Spec) Normalize() (Spec, error) {
 			)
 		}
 	}
-	r.Cases = nil
+//	r.Cases = nil
 	return r, nil
 }
 
 
-func (e Expr) Norm(cases map[string]Case) (Expr, error) {
-	var err error
-
+func (e Expr) IsConsistent() bool {
 	// Bomb out if it's not a single kind
 	consistency := 0
 	if len(e.Is) > 0 {
@@ -153,7 +153,74 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 	if len(e.Every) > 0 {
 		consistency++
 	}
-	if consistency != 1 {
+	return consistency==1
+}
+
+func (e Expr) FlatDistribute(cases map[string]Case) (Expr, error) {
+	hasAnOr := false
+	for k := 0; k < len(e.And); k++ {
+		if len(e.And[k].Or) > 0 {
+			hasAnOr = true
+		}
+	}
+	if !hasAnOr {
+		return e,nil
+	}
+	r := Expr{}
+	k := 0
+	eak := e.And[k]
+	if len(eak.Or) > 0 {
+		for j := 0; j < len(eak.Or); j++ {
+			r.Or = append(
+				r.Or,
+				eak.Or[j],
+			)
+		}
+	} else {
+		r.Or = append(
+			r.Or,
+			eak,
+		)
+	}
+	for k = 1; k < len(e.And); k++ {
+		eak = e.And[k]
+		// Get started with the leftmost item
+		r3 := Expr{}
+		if len(eak.Is) > 0 {
+			for i := 0; i < len(r.Or); i++ {
+				r3.Or = append(
+					r3.Or,
+					Expr{And: []Expr{r.Or[i], eak}},
+				)
+			}
+		} else if len(eak.And) > 0 {
+			for i := 0; i < len(r.Or); i++ {
+				for j := 0; j < len(eak.And); j++ {
+					v := eak.And[j]
+					r3.Or = append(
+						r3.Or,
+						Expr{And: append([]Expr{r.Or[i]}, v)},
+					)
+				}
+			}
+		} else if len(eak.Or) > 0 {
+			for i := 0; i < len(r.Or); i++ {
+				for j := 0; j < len(eak.Or); j++ {
+					r3.Or = append(
+						r3.Or,
+						Expr{And: []Expr{r.Or[i], eak.Or[j]}},
+					)
+				}
+			}
+		}
+		r = r3
+	}
+	return r,nil
+}
+
+func (e Expr) Flat(cases map[string]Case) (Expr,error) {
+	var err error
+	if !e.IsConsistent() {
 		return e, fmt.Errorf("invalid expression: must be op Is,And,Or,Requires,Some,Every")
 	}
 
@@ -162,16 +229,26 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 		if !ok {
 			return e, fmt.Errorf("invalid expression: op Requires not found")
 		}
-		e,err = c.Expr.Norm(cases)
+		e,err = c.Expr.Flat(cases)
 		if !ok {
 			return e, fmt.Errorf("invalid expression: cannot normalize Requires: %v",err)
 		}
 		return e, nil
 	}
 
-	// Atomic term.  Just return it
-	if len(e.Is) > 0 {
-		return e, nil
+
+	if len(e.Some) > 0 {
+		r := Expr{}
+		if len(e.Some) == 1 {
+			return e, fmt.Errorf("invalid expression: op Some requires first value is a field")
+		}
+		f := e.Some[0]
+		a := e.Some[1:]
+		for i := 0; i < len(a); i++ {
+			v := Expr{Is: fmt.Sprintf("%s:%s", f, a[i])}
+			r.Or = append(r.Or, v)
+		}
+		return r, nil
 	}
 
 	if len(e.Every) > 0 {
@@ -188,52 +265,49 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 		return r, nil
 	}
 
-	if len(e.Some) > 0 {
-		r := Expr{}
-		if len(e.Some) == 1 {
-			return e, fmt.Errorf("invalid expression: op Some requires first value is a field")
-		}
-		f := e.Some[0]
-		a := e.Some[1:]
-		for i := 0; i < len(a); i++ {
-			v := Expr{Is: fmt.Sprintf("%s:%s", f, a[i])}
-			r.Or = append(r.Or, v)
-		}
-		return r, nil
-	}
-
-
-	// It's recursive And and Or from here out
-	// Normalize e
-	r := Expr{ }
-
+	// And may convert to Or or Is and fall through
 	if len(e.And) > 0 {
+		// Normalize args
+		r := Expr{}
 		for i := range e.And {
-			n, err := e.And[i].Norm(cases)
+			n, err := e.And[i].Flat(cases)
 			if err != nil {
 				return e, err
 			}
 			r.And = append(r.And, n)
 		}
+		// Sort with And > Or to make them adjacent
 		sort.Slice(r.And, func(i,j int) bool {
 			return len(r.And[i].And) > 0 && len(r.And[j].Or) > 0 
 		})
-		rf := Expr{}
-		for i := 0 ; i < len(r.And); i++ {
-			if len(r.And[i].And) > 0 {
-				for j := 0 ; j < len(r.And[i].And); j++ {
-					rf.And = append(rf.And, r.And[i].And[j])
-				}
-			} else {
-				rf.And = append(rf.And, r.And[i])
-			}
+
+		r, err = r.FlatDistribute(cases)
+		if err != nil {
+			return r,err
 		}
-		r = rf
+
+		// It could be And or Or or Is at this point
+		if len(r.Or) > 0 {
+			// flatten out and
+			for i := 0; i < len(r.Or); i++ {
+				r.Or[i] = r.Or[i].FlatAnd()
+			}
+			return r, err
+		} else if len(r.And) > 0 {
+			e = r.FlatAnd()
+		} else if len(r.Is) > 0 {
+			e = r
+		}
+	}
+
+	if len(e.Is) > 0 {
+		return e,nil
 	}
 
 	if len(e.Or) > 0 {
+		r := Expr{}
 		for i := range e.Or {
-			n, err := e.Or[i].Norm(cases)
+			n, err := e.Or[i].Flat(cases)
 			if err != nil {
 				return e, err
 			}
@@ -242,110 +316,10 @@ func (e Expr) Norm(cases map[string]Case) (Expr, error) {
 		sort.Slice(r.Or, func(i,j int) bool {
 			return len(r.Or[i].And) > 0 && len(r.Or[j].Or) > 0 
 		})
-		rf := Expr{}
-		for i := 0 ; i < len(r.Or); i++ {
-			if len(r.Or[i].Or) > 0 {
-				for j := 0 ; j < len(r.Or[i].Or); j++ {
-					rf.Or = append(rf.Or, r.Or[i].Or[j])
-				}
-			} else {
-				rf.Or = append(rf.Or, r.Or[i])
-			}
-		}
-		r = rf
 		return r, nil
 	}
 
-	if len(e.And) == 0 {
-		return e, fmt.Errorf("should be And for this term")
-	}
-	
-	// If there is more than one, then combine as much as possible,
-	// eliminating first arg as we do so
-	r2 := Expr{}
-	for k := 0; k < len(r.And); k++ {
-		rak := r.And[k]
-		// Get started with the leftmost item
-		if k == 0 {
-			if len(rak.Or) > 0 {
-				for j := 0; j < len(rak.Or); j++ {
-					r2.Or = append(
-						r2.Or,
-						rak.Or[j],
-					)
-				}
-				continue
-			}
-			r2.Or = append(
-				r2.Or,
-				rak,
-			)
-			continue
-		}
-		// Handle the or case
-		if len(rak.Is) > 0 {
-			r3 := Expr{}
-			for i := 0; i < len(r2.Or); i++ {
-				r3.Or = append(
-					r3.Or,
-					Expr{And: []Expr{r2.Or[i], rak}},
-				)
-			}
-			r2 = r3
-			continue
-		}
-		// Handle the or case
-		if len(r.And[k].And) > 0 {
-			r3 := Expr{}
-			for i := 0; i < len(r2.Or); i++ {
-				r3.Or = append(
-					r3.Or,
-					Expr{And: append([]Expr{r2.Or[i]}, rak.And...)},
-				)
-			}
-			r2 = r3
-			continue
-		}
-		// Handle the or case
-		if len(rak.Or) > 0 {
-			r3 := Expr{}
-			for i := 0; i < len(r2.Or); i++ {
-				for j := 0; j < len(rak.Or); j++ {
-					r3.Or = append(
-						r3.Or,
-						Expr{And: []Expr{r2.Or[i], rak.Or[j]}},
-					)
-				}
-			}
-			r2 = r3
-			continue
-		}
-	}
-	/*
-	return r2,nil
-	*/
-	r3 := Expr{}
-	for i := 0; i < len(r2.Or); i++ {
-		r3.Or = append(r3.Or, r2.Or[i].FlatAnd())
-	}
-	return r3, nil
-}
-
-func (e Expr) FlatAnd() Expr {
-	if len(e.And) > 0 {
-		r := Expr{}
-		for i := 0 ; i < len(e.And); i++ {
-			if len(e.And[i].And) > 0 {
-				for j := 0; j < len(e.And[i].And); j++ {
-					r.And = append(r.And, e.And[i].And[j])
-				}
-			} else {
-				r.And = append(r.And, e.And[i])
-			}
-		}
-		return r
-	}
-	return e
+	return e, fmt.Errorf("unrecotnized expression")
 }
 
 func (e Expr) FlatOr() Expr {
@@ -356,15 +330,34 @@ func (e Expr) FlatOr() Expr {
 				for j := 0; j < len(e.Or[i].Or); j++ {
 					r.Or = append(r.Or, e.Or[i].Or[j])
 				}
+			} else if len(e.Or[i].And) > 0 {
+				r.Or = append(r.Or, e.Or[i].FlatAnd())
 			} else {
 				r.Or = append(r.Or, e.Or[i])
 			}
 		}
-		return r
 	}
 	return e
 }
 
+func (e Expr) FlatAnd() Expr {
+	if len(e.And) > 0 {
+		r := Expr{}
+		for i := 0 ; i < len(e.And); i++ {
+			if len(e.And[i].And) > 0 {
+				for j := 0; j < len(e.And[i].And); j++ {
+					r.And = append(r.And, e.And[i].And[j].FlatAnd())
+				}
+			} else if len(e.And[i].Or) > 0 {
+				r.And = append(r.And, e.And[i].FlatOr())
+			} else {
+				r.And = append(r.And, e.And[i].FlatAnd())
+			}
+		}
+		return	r
+	}
+	return e
+}
 
 func main() {
 	e, err := AsSpec(`{
