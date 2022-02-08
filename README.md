@@ -202,4 +202,18 @@ For example, encode each signed attribute into a polynomial.  Then use Lagrange 
 
 ![lagrange polynomial](https://render.githubusercontent.com/render/math?math=\color{gray}L[x]=\sum_j%20Y_j[\prod_i^{i%20\ne%20j}\frac{x%20-%20X_j}{X_i%20-%20X_j}])
 
-Replacing all `(X_i,Y_j)` with `(0,L[0]),(1,L[1]),(2,L[2]),(3,L[3]),...` can hide the original points, while still pinning down the curve.  The curve ends up being a sort of MAC that we choose some points, and let others be arbitrary. It is a certificate as well.   
+Replacing all `(X_i,Y_j)` with `(1,L[1]),(2,L[2]),(3,L[3]),...` can hide the original points, while still pinning down the curve.  The point `(0,L[0])` can be thought of as a hash of the certificate, as this point is determined by the others.  The curve ends up being a sort of MAC that we choose some points, and let others be arbitrary. It is a certificate as well.   
+
+For example, the CA issues a certificate with points:
+
+- `(42,L[42])`
+- `(55,L[55])`
+- `(67,L[67])`
+
+Where the actual `(X,Y)` values that the CA generated were used to create the curve.  We can then publish the curve like:
+
+- `(1,L[1])`
+- `(2,L[2])`
+- `(3,L[3])`
+
+Because any three points would produce the same curve with the same `(0,L[0])`.  This means that the `X` that represents the attribute like `H(attribute_i)`, and `Y` represents the signed attribute that can only be produced by the CA `s H(attribute_i)`.  Padlocks are produced like `Pair(f P_0 + f P_1 + ..., s Q)`, and users unlock them like `Pair(s P_0 + s P_1 + ..., f Q)`.  The two ways produce the same value, allowing for the same key to be derived. 
