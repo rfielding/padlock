@@ -216,4 +216,4 @@ Where the actual `(X,Y)` values that the CA generated were used to create the cu
 - `(2,L[2])`
 - `(3,L[3])`
 
-Because any three points would produce the same curve with the same `(0,L[0])`.  This means that the `X` that represents the attribute like `H(attribute_i)`, and `Y` represents the signed attribute that can only be produced by the CA `s H(attribute_i)`.  Padlocks are produced like `Pair(f P_0 + f P_1 + ..., s Q)`, and users unlock them like `Pair(s P_0 + s P_1 + ..., f Q)`.  The two ways produce the same value, allowing for the same key to be derived. 
+Because any three points would produce the same curve with the same `(0,L[0])`.  This means that the `X` that represents the attribute like `H(attribute_i)`, and `Y` represents the signed attribute that can only be produced by the CA `s H(attribute_i)`.  Padlocks are produced like `Pair(f P_0 + f P_1 + ..., s Q)`, and users unlock them like `Pair(s P_0 + s P_1 + ..., f Q)`.  The two ways produce the same value, allowing for the same key to be derived ; because `f` and `s` can be swapped in the equation.
