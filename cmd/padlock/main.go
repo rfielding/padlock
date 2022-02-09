@@ -118,7 +118,7 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	// Pair(sum_i[ f H1(a_i)], pub)
 	for u, _ := range e.Unlocks {
 		f := R()
-		p := ec.G1Generator()
+		p := new(ec.G1)
 		for i := 0; i < len(e.Unlocks[u].And); i++ {
 			p.Add(p, H1(e.Unlocks[u].And[i]))
 			p.ScalarMult(f, p)
@@ -134,7 +134,7 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 			return e, err
 		}
 		e.Unlocks[u].K = Xor(targets[e.Unlocks[u].Key], v2)
-		fP := ec.G1Generator()
+		fP := ec.G2Generator()
 		fP.ScalarMult(f, fP)
 		e.Unlocks[u].Pubf = fP.Bytes()
 	}
@@ -142,10 +142,52 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	return e, nil
 }
 
+func G1Sum(arr []string) (*ec.G1,error) {
+	p := new(ec.G1)
+	// Get a sum of the required attributes
+	for j := 0; j < len(arr); j++ {;
+		a := ec.G1Generator()
+		err := a.SetBytes([]byte(arr[j]))
+		if err != nil {
+			return p,err
+		}
+		p.Add(p, a)
+	}
+	return p,nil
+}
+
 // Plug in a certificate and see what keys come back
-func (s *Spec) Unlock(cert Certificate) map[string][]byte {
-	// TODO
-	return nil
+func (s *Spec) Unlock(cert Certificate) (map[string][]byte,error) {
+	granted := make(map[string][]byte)
+	for u,_ := range s.Unlocks {
+		hasAll := true
+		for j := 0 ; j < len(s.Unlocks[u].And); j++ {
+			k := s.Unlocks[u].And[j]
+			_, ok := cert.Facts[k]
+			if !ok {
+				hasAll = false
+			}
+		}
+		if hasAll {
+			// Extract the file public key
+			f := ec.G2Generator()
+			err := f.SetBytes(s.Unlocks[u].Pubf)
+			if err != nil {
+				return granted,err
+			}
+			p,err := G1Sum(s.Unlocks[u].And)
+			if err != nil {
+				return granted,err
+			}
+			v,err := ec.Pair(p,f).MarshalBinary()
+			if err != nil {
+				return granted,err
+			}
+			granted[s.Unlocks[u].Key] =
+				Xor(s.Unlocks[u].K,v)
+		}
+	}
+	return granted,nil
 }
 
 func Xor(t []byte, k []byte) []byte {
@@ -252,11 +294,9 @@ func (s Spec) Normalize() (Spec, error) {
 				v := a.And[j].Is
 				items = append(items, v)
 				if len(v) == 0 {
-					panic(
-						fmt.Errorf(
-							"error in normalization of spec: %v",
-							AsJson(r.Cases[k].Expr.Or[i]),
-						),
+					return r,fmt.Errorf(
+						"error in normalization of spec: %v",
+						AsJson(r.Cases[k].Expr.Or[i]),
 					)
 				}
 			}
@@ -500,10 +540,15 @@ func (e Expr) FlatAnd() Expr {
 }
 
 func main() {
+	// Set up the CA
 	priv := Hs("farkfark")
-	pub := CA(priv)
+	pub := CA(priv) 
+
+	// Plan the keys for the padlock
 	W := sha256.Sum256([]byte("pencil"))
 	R := sha256.Sum256([]byte("paper"))
+
+	// Create the padlock
 	e, err := AsSpec(`{
 		"label": "ADULT",
 		"fg": "white",
@@ -533,18 +578,26 @@ func main() {
 		"Write": W[:],
 		"Read":  R[:],
 	})
-
 	if err != nil {
 		panic(err)
 	}
+
 	fmt.Printf("eN: %s\n", AsJson(e))
 
+	// Create a certificate
 	alice,err := Issue(
 		priv, 
-		[]string{"citizen:NL","email:rob.fielding@gmail.com"},
+		[]string{"citizen:NL","email:rob.fielding@gmail.com","age:adult"},
 	)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("alice: %s\n", AsJson(alice))
+
+	// Attempt an unlock
+	granted, err := e.Unlock(alice)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("granted: %v", granted)
 }
