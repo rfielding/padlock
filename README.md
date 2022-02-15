@@ -251,17 +251,3 @@ Now, when plugging into a padlock `L[ H[citizenship:US] ]` can be looked up.  So
 To map a string to a point, `(L_x[v], L_y[v])` can be defined as a pair.  This is the user's certificate that attests to some attributes.  `H[v]` is a scalar normal public hash function, sha256.   Map `H[v]` to `L_x[v]` and `H[v]` to `L_y[v]` independently.  Using this, we can map `v -> P_v`.  If any of the values were not signed, then the key will come out wrong.
 
 
-
-```mermaid
-sequenceDiagram
-    participant Alice
-    participant Bob
-    Alice->>John: Hello John, how are you?
-    loop Healthcheck
-        John->>John: Fight against hypochondria
-    end
-    Note right of John: Rational thoughts <br/>prevail!
-    John-->>Alice: Great!
-    John->>Bob: How about you?
-    Bob-->>John: Jolly good!
-```
