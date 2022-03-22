@@ -8,10 +8,9 @@ import (
 	"github.com/cloudflare/circl/ecc/bls12381/ff"
 	"log"
 	"sort"
-	//"math/big"
 	"crypto/rand"
 	"crypto/sha256"
-	//"encoding/hex"
+	"encoding/hex"
 )
 
 // !!! Problem: this curve keeps x,y,z members private, so I can't extract them
@@ -19,22 +18,22 @@ import (
 // L[v] = sum_j [ Y_j * prod_i^{i != j}[(x - x_j)/(x_i - x_j)]
 func Lagrange(v *ff.Scalar, x []*ff.Scalar, y []*ff.Scalar) *ff.Scalar {
 	sum := new(ff.Scalar)
-	for j := 0 ; j < len(y); j++ {
+	for j := 0; j < len(y); j++ {
 		prod := new(ff.Scalar)
 		prod.SetOne()
 		prod.Mul(prod, y[j])
-		for i := 0 ; i < len(x) ; i++ {
+		for i := 0; i < len(x); i++ {
 			if i != j {
 				num := new(ff.Scalar)
 				num.Sub(v, x[j])
 				div := new(ff.Scalar)
 				div.Sub(x[i], x[j])
 				div.Inv(div)
-				prod.Mul(prod,num)
-				prod.Mul(prod,div)
+				prod.Mul(prod, num)
+				prod.Mul(prod, div)
 			}
 		}
-		sum.Add(sum,prod)
+		sum.Add(sum, prod)
 	}
 	return sum
 }
@@ -63,7 +62,7 @@ func Issue(s *ff.Scalar, facts []string) (Certificate, error) {
 		h.ScalarMult(s, h)
 		cert.Facts[facts[j]] = h.Bytes()
 	}
-	return cert,nil
+	return cert, nil
 }
 
 func H1(s string) *ec.G1 {
@@ -120,9 +119,14 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 		f := R()
 		p := new(ec.G1)
 		for i := 0; i < len(e.Unlocks[u].And); i++ {
-			p.Add(p, H1(e.Unlocks[u].And[i]))
-			p.ScalarMult(f, p)
+			v := H1(e.Unlocks[u].And[i])
+			if i == 0 {
+				p = v
+			} else {
+				p.Add(p, v)
+			}
 		}
+		p.ScalarMult(f, p)
 		pt := ec.Pair(p, capub)
 		// xor this secret with the target
 		v, err := pt.MarshalBinary()
@@ -142,26 +146,47 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	return e, nil
 }
 
-func G1Sum(arr []string) (*ec.G1,error) {
+func SmokeTest() {
+
+	priv := Hs("farkfark")
+	pub := CA(priv)
+	f := R()
+
+	a1 := H1("assertion1")
+	a2 := H1("assertion2")
+	p := new(ec.G1)
+	log.Printf("%v", a1)
+	p = a1
+	p.Add(p,a1)
+	_,_,_ = pub,f,a2
+	log.Printf("%v", a1)
+}
+
+func G1Sum(arr []string, signedFacts map[string][]byte) (*ec.G1, error) {
 	p := new(ec.G1)
 	// Get a sum of the required attributes
-	for j := 0; j < len(arr); j++ {;
+	for j := 0; j < len(arr); j++ {
 		a := ec.G1Generator()
-		err := a.SetBytes([]byte(arr[j]))
+		err := a.SetBytes(signedFacts[arr[j]])
 		if err != nil {
-			return p,err
+			return p, fmt.Errorf("arr[j]: barr %s len(%d) set on G1 Generator  %v", arr[j], len(arr[j]), err)
 		}
-		p.Add(p, a)
+		if j == 0 {
+			p = a
+		} else {
+			p.Add(p, a)
+		}
 	}
-	return p,nil
+	return p, nil
 }
 
 // Plug in a certificate and see what keys come back
-func (s *Spec) Unlock(cert Certificate) (map[string][]byte,error) {
+func (s *Spec) Unlock(cert Certificate) (map[string][]byte, error) {
 	granted := make(map[string][]byte)
-	for u,_ := range s.Unlocks {
+	for u, _ := range s.Unlocks {
+		// Are all the facts we need in here?
 		hasAll := true
-		for j := 0 ; j < len(s.Unlocks[u].And); j++ {
+		for j := 0; j < len(s.Unlocks[u].And); j++ {
 			k := s.Unlocks[u].And[j]
 			_, ok := cert.Facts[k]
 			if !ok {
@@ -169,25 +194,25 @@ func (s *Spec) Unlock(cert Certificate) (map[string][]byte,error) {
 			}
 		}
 		if hasAll {
-			// Extract the file public key
+			// Extract the file public key for this case
 			f := ec.G2Generator()
 			err := f.SetBytes(s.Unlocks[u].Pubf)
 			if err != nil {
-				return granted,err
+				return granted, fmt.Errorf("f.SetBytes(s.Unlocks[u].Pubf): %v", err)
 			}
-			p,err := G1Sum(s.Unlocks[u].And)
+			p, err := G1Sum(s.Unlocks[u].And, cert.Facts)
 			if err != nil {
-				return granted,err
+				return granted, fmt.Errorf("s.Unlocks[u].And: %v", err)
 			}
-			v,err := ec.Pair(p,f).MarshalBinary()
+			v, err := ec.Pair(p, f).MarshalBinary()
 			if err != nil {
-				return granted,err
+				return granted, fmt.Errorf("ec.Pair(p.f).MarshalBinary: %v", err)
 			}
 			granted[s.Unlocks[u].Key] =
-				Xor(s.Unlocks[u].K,v)
+				Xor(s.Unlocks[u].K, v)
 		}
 	}
-	return granted,nil
+	return granted, nil
 }
 
 func Xor(t []byte, k []byte) []byte {
@@ -294,7 +319,7 @@ func (s Spec) Normalize() (Spec, error) {
 				v := a.And[j].Is
 				items = append(items, v)
 				if len(v) == 0 {
-					return r,fmt.Errorf(
+					return r, fmt.Errorf(
 						"error in normalization of spec: %v",
 						AsJson(r.Cases[k].Expr.Or[i]),
 					)
@@ -452,7 +477,7 @@ func (e Expr) Flat(cases map[string]Case) (Expr, error) {
 		for i := range e.And {
 			n, err := e.And[i].Flat(cases)
 			if err != nil {
-				return e, err
+				return e, fmt.Errorf("e.And[i].Flat(cases): %v", err)
 			}
 			r.And = append(r.And, n)
 		}
@@ -463,7 +488,7 @@ func (e Expr) Flat(cases map[string]Case) (Expr, error) {
 
 		r, err = r.FlatDistribute(cases)
 		if err != nil {
-			return r, err
+			return r, fmt.Errorf("r.FlatDistribute(cases): %v", err)
 		}
 
 		// It could be And or Or or Is at this point
@@ -489,7 +514,7 @@ func (e Expr) Flat(cases map[string]Case) (Expr, error) {
 		for i := range e.Or {
 			n, err := e.Or[i].Flat(cases)
 			if err != nil {
-				return e, err
+				return e, fmt.Errorf("e.Or[i].Flat(cases): %v", err)
 			}
 			r.Or = append(r.Or, n)
 		}
@@ -540,9 +565,11 @@ func (e Expr) FlatAnd() Expr {
 }
 
 func main() {
+	SmokeTest()
+
 	// Set up the CA
 	priv := Hs("farkfark")
-	pub := CA(priv) 
+	pub := CA(priv)
 
 	// Plan the keys for the padlock
 	W := sha256.Sum256([]byte("pencil"))
@@ -585,9 +612,14 @@ func main() {
 	fmt.Printf("eN: %s\n", AsJson(e))
 
 	// Create a certificate
-	alice,err := Issue(
-		priv, 
-		[]string{"citizen:NL","email:rob.fielding@gmail.com","age:adult"},
+	alice, err := Issue(
+		priv,
+		[]string{
+			"citizenship:NL",
+			"citizenship:!SA",
+			"email:rob.fielding@gmail.com",
+			"age:adult",
+		},
 	)
 	if err != nil {
 		panic(err)
@@ -599,5 +631,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("granted: %v", granted)
+	fmt.Printf("read: %s\n", hex.EncodeToString(R[:]))
+	fmt.Printf("write: %s\n", hex.EncodeToString(W[:]))
+	for k,v := range granted {
+		fmt.Printf("granted %s: %s\n", k, hex.EncodeToString(v))
+	}
 }
