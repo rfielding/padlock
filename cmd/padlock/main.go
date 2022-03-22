@@ -2,15 +2,15 @@ package main
 
 import (
 	//"github.com/cloudflare/circl/group"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	ec "github.com/cloudflare/circl/ecc/bls12381"
 	"github.com/cloudflare/circl/ecc/bls12381/ff"
 	"log"
 	"sort"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
 )
 
 // !!! Problem: this curve keeps x,y,z members private, so I can't extract them
@@ -53,13 +53,13 @@ type Certificate struct {
 
 // Issue a certificate by calculating a map from known values to signed points,
 // where unknown values map to arbitrary points.
-func Issue(s *ff.Scalar, facts []string) (Certificate, error) {
+func Issue(priv *ff.Scalar, facts []string) (Certificate, error) {
 	cert := Certificate{
 		Facts: make(map[string][]byte),
 	}
 	for j := 0; j < len(facts); j++ {
 		h := H1(facts[j])
-		h.ScalarMult(s, h)
+		h.ScalarMult(priv, h)
 		cert.Facts[facts[j]] = h.Bytes()
 	}
 	return cert, nil
@@ -102,114 +102,93 @@ func CA(s *ff.Scalar) *ec.G2 {
 	return q
 }
 
+// The array of G1 are secret*H1(attr), and b is what to pair it with
+func G1SumPairXor(signedFacts []*ec.G1, b *ec.G2, k []byte) ([]byte, error) {
+	p := ec.G1Generator()
+	// Get a sum of the required attributes
+	for j := 0; j < len(signedFacts); j++ {
+		p.Add(p, signedFacts[j])
+	}
+	v, err := ec.Pair(p, b).MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("ec.Pair(p.f).MarshalBinary: %v", err)
+	}
+	return Xor(k, v), nil
+}
+
 func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	// Parse the lock specification
-	var e Spec
-	err := json.Unmarshal([]byte(s), &e)
+	var sp Spec
+	err := json.Unmarshal([]byte(s), &sp)
 	if err != nil {
-		return e, fmt.Errorf("parse error: %v", err)
+		return sp, fmt.Errorf("parse error: %v", err)
 	}
-	e.Targets = targets
-	e, err = e.Normalize()
+	sp, err = sp.Normalize()
 	if err != nil {
-		return e, err
+		return sp, err
 	}
 	// Pair(sum_i[ f H1(a_i)], pub)
-	for u, _ := range e.Unlocks {
+	for u, _ := range sp.Unlocks {
 		f := R()
-		p := new(ec.G1)
-		for i := 0; i < len(e.Unlocks[u].And); i++ {
-			v := H1(e.Unlocks[u].And[i])
-			if i == 0 {
-				p = v
-			} else {
-				p.Add(p, v)
-			}
+		fileFacts := make([]*ec.G1, 0) // [] f*H1(attr_i) * s
+		for i := 0; i < len(sp.Unlocks[u].And); i++ {
+			p := H1(sp.Unlocks[u].And[i])
+			p.ScalarMult(f, p)
+			fileFacts = append(fileFacts, p)
 		}
-		p.ScalarMult(f, p)
-		pt := ec.Pair(p, capub)
-		// xor this secret with the target
-		v, err := pt.MarshalBinary()
+
+		answer, err := G1SumPairXor(fileFacts, capub, targets[sp.Unlocks[u].Key])
 		if err != nil {
-			return e, err
+			return sp, fmt.Errorf("G1SumPairXor: %v", err)
 		}
-		v2, err := Hsb(v).MarshalBinary()
-		if err != nil {
-			return e, err
-		}
-		e.Unlocks[u].K = Xor(targets[e.Unlocks[u].Key], v2)
+		sp.Unlocks[u].K = answer
+
 		fP := ec.G2Generator()
 		fP.ScalarMult(f, fP)
-		e.Unlocks[u].Pubf = fP.Bytes()
+		sp.Unlocks[u].Pubf = fP.Bytes()
 	}
-	e.CAPub = capub.Bytes()
-	return e, nil
-}
-
-func SmokeTest() {
-
-	priv := Hs("farkfark")
-	pub := CA(priv)
-	f := R()
-
-	a1 := H1("assertion1")
-	a2 := H1("assertion2")
-	p := new(ec.G1)
-	log.Printf("%v", a1)
-	p = a1
-	p.Add(p,a1)
-	_,_,_ = pub,f,a2
-	log.Printf("%v", a1)
-}
-
-func G1Sum(arr []string, signedFacts map[string][]byte) (*ec.G1, error) {
-	p := new(ec.G1)
-	// Get a sum of the required attributes
-	for j := 0; j < len(arr); j++ {
-		a := ec.G1Generator()
-		err := a.SetBytes(signedFacts[arr[j]])
-		if err != nil {
-			return p, fmt.Errorf("arr[j]: barr %s len(%d) set on G1 Generator  %v", arr[j], len(arr[j]), err)
-		}
-		if j == 0 {
-			p = a
-		} else {
-			p.Add(p, a)
-		}
-	}
-	return p, nil
+	sp.CAPub = capub.Bytes()
+	return sp, nil
 }
 
 // Plug in a certificate and see what keys come back
-func (s *Spec) Unlock(cert Certificate) (map[string][]byte, error) {
+func (sp *Spec) Unlock(cert Certificate) (map[string][]byte, error) {
 	granted := make(map[string][]byte)
-	for u, _ := range s.Unlocks {
+	capub := ec.G2Generator()
+	err := capub.SetBytes(sp.CAPub)
+	if err != nil {
+		return granted, fmt.Errorf("capub.SetBytes(s.Unlocks[u].Pubf): %v", err)
+	}
+	for u, _ := range sp.Unlocks {
 		// Are all the facts we need in here?
 		hasAll := true
-		for j := 0; j < len(s.Unlocks[u].And); j++ {
-			k := s.Unlocks[u].And[j]
-			_, ok := cert.Facts[k]
+		for i := 0; i < len(sp.Unlocks[u].And); i++ {
+			_, ok := cert.Facts[sp.Unlocks[u].And[i]]
 			if !ok {
 				hasAll = false
 			}
 		}
 		if hasAll {
-			// Extract the file public key for this case
-			f := ec.G2Generator()
-			err := f.SetBytes(s.Unlocks[u].Pubf)
-			if err != nil {
-				return granted, fmt.Errorf("f.SetBytes(s.Unlocks[u].Pubf): %v", err)
+			signedAttrs := make([]*ec.G1, 0) // [] s*H1(attr_i)
+			for i := 0; i < len(sp.Unlocks[u].And); i++ {
+				v := cert.Facts[sp.Unlocks[u].And[i]]
+				val := ec.G1Generator()
+				err := val.SetBytes(v)
+				if err != nil {
+					return nil, fmt.Errorf("val.SetBytes(v): %v", err)
+				}
+				signedAttrs = append(signedAttrs, val) // [] s*H1(atr_i) * f
 			}
-			p, err := G1Sum(s.Unlocks[u].And, cert.Facts)
+			fP := ec.G2Generator()
+			err := fP.SetBytes(sp.Unlocks[u].Pubf)
 			if err != nil {
-				return granted, fmt.Errorf("s.Unlocks[u].And: %v", err)
+				return nil, fmt.Errorf("fP.SetBytes: %v", err)
 			}
-			v, err := ec.Pair(p, f).MarshalBinary()
+			answer, err := G1SumPairXor(signedAttrs, fP, sp.Unlocks[u].K)
 			if err != nil {
-				return granted, fmt.Errorf("ec.Pair(p.f).MarshalBinary: %v", err)
+				return nil, fmt.Errorf("G1SumPairXor: %v", err)
 			}
-			granted[s.Unlocks[u].Key] =
-				Xor(s.Unlocks[u].K, v)
+			granted[sp.Unlocks[u].Key] = answer
 		}
 	}
 	return granted, nil
@@ -232,13 +211,12 @@ func AsJson(v interface{}) string {
 }
 
 type Spec struct {
-	Label      string            `json:"label"`
-	Foreground string            `json:"fg,omitempty"`
-	Background string            `json:"bg,omitempty"`
-	Cases      map[string]Case   `json:"cases,omitempty"`
-	Unlocks    []Unlock          `json:"unlocks,omitempty"`
-	Targets    map[string][]byte `json:"-"`
-	CAPub      []byte            `json:"capub,omitempty"`
+	Label      string          `json:"label"`
+	Foreground string          `json:"fg,omitempty"`
+	Background string          `json:"bg,omitempty"`
+	Cases      map[string]Case `json:"cases,omitempty"`
+	Unlocks    []Unlock        `json:"unlocks,omitempty"`
+	CAPub      []byte          `json:"capub,omitempty"`
 }
 
 type Unlock struct {
@@ -565,8 +543,6 @@ func (e Expr) FlatAnd() Expr {
 }
 
 func main() {
-	SmokeTest()
-
 	// Set up the CA
 	priv := Hs("farkfark")
 	pub := CA(priv)
@@ -633,7 +609,7 @@ func main() {
 	}
 	fmt.Printf("read: %s\n", hex.EncodeToString(R[:]))
 	fmt.Printf("write: %s\n", hex.EncodeToString(W[:]))
-	for k,v := range granted {
+	for k, v := range granted {
 		fmt.Printf("granted %s: %s\n", k, hex.EncodeToString(v))
 	}
 }
