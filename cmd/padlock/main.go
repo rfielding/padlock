@@ -109,7 +109,7 @@ func CA(s *ff.Scalar) *ec.G2 {
 
 // The array of G1 are secret*H1(attr), and b is what to pair it with
 func G1SumPairXor(signedFacts []*ec.G1, b *ec.G2, k []byte) ([]byte, error) {
-	p := ec.G1Generator()
+	p := new(ec.G1)
 	// Get a sum of the required attributes
 	for j := 0; j < len(signedFacts); j++ {
 		p.Add(p, signedFacts[j])
@@ -554,6 +554,8 @@ func main() {
 	W := sha256.Sum256([]byte("pencil"))
 	R := sha256.Sum256([]byte("paper"))
 
+	keyMap := map[string][]byte{"Write": W[:], "Read": R[:]}
+
 	// Create the padlock
 	e, err := AsSpec(`{
 		"label": "ADULT",
@@ -580,10 +582,7 @@ func main() {
 				}
 			}
 		}
-	}`, pub, map[string][]byte{
-		"Write": W[:],
-		"Read":  R[:],
-	})
+	}`, pub, keyMap)
 	if err != nil {
 		panic(err)
 	}
@@ -610,9 +609,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("read: %s\n", hex.EncodeToString(R[:]))
-	fmt.Printf("write: %s\n", hex.EncodeToString(W[:]))
 	for k, v := range granted {
 		fmt.Printf("granted %s: %s\n", k, hex.EncodeToString(v))
+		fmt.Printf("expected %s: %s\n", k, hex.EncodeToString(keyMap[k]))
 	}
 }
