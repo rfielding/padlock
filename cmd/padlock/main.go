@@ -58,9 +58,7 @@ func Issue(priv *ff.Scalar, facts []string) (Certificate, error) {
 		Facts: make(map[string][]byte),
 	}
 	for j := 0; j < len(facts); j++ {
-		h := H1(facts[j])
-		h.ScalarMult(priv, h)
-		cert.Facts[facts[j]] = h.Bytes()
+		cert.Facts[facts[j]] = H1n(facts[j],priv).Bytes()
 	}
 	return cert, nil
 }
@@ -68,6 +66,13 @@ func Issue(priv *ff.Scalar, facts []string) (Certificate, error) {
 func H1(s string) *ec.G1 {
 	v := ec.G1Generator()
 	v.Hash([]byte(s), nil)
+	return v
+}
+
+func H1n(s string, n *ff.Scalar) *ec.G1 {
+	v := ec.G1Generator()
+	v.Hash([]byte(s), nil)
+	v.ScalarMult(n, v)
 	return v
 }
 
@@ -132,9 +137,7 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 		f := R()
 		fileFacts := make([]*ec.G1, 0) // [] f*H1(attr_i) * s
 		for i := 0; i < len(sp.Unlocks[u].And); i++ {
-			p := H1(sp.Unlocks[u].And[i])
-			p.ScalarMult(f, p)
-			fileFacts = append(fileFacts, p)
+			fileFacts = append(fileFacts, H1n(sp.Unlocks[u].And[i], f))
 		}
 
 		answer, err := G1SumPairXor(fileFacts, capub, targets[sp.Unlocks[u].Key])
@@ -179,12 +182,12 @@ func (sp *Spec) Unlock(cert Certificate) (map[string][]byte, error) {
 				}
 				signedAttrs = append(signedAttrs, val) // [] s*H1(atr_i) * f
 			}
-			fP := ec.G2Generator()
-			err := fP.SetBytes(sp.Unlocks[u].Pubf)
+			filepub := ec.G2Generator()
+			err := filepub.SetBytes(sp.Unlocks[u].Pubf)
 			if err != nil {
-				return nil, fmt.Errorf("fP.SetBytes: %v", err)
+				return nil, fmt.Errorf("filepub.SetBytes: %v", err)
 			}
-			answer, err := G1SumPairXor(signedAttrs, fP, sp.Unlocks[u].K)
+			answer, err := G1SumPairXor(signedAttrs, filepub, sp.Unlocks[u].K)
 			if err != nil {
 				return nil, fmt.Errorf("G1SumPairXor: %v", err)
 			}
