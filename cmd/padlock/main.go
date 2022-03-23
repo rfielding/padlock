@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/rfielding/padlock/abe"
-	//"github.com/cloudflare/circl/group"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -40,7 +39,7 @@ func main() {
 					"and": [
 						{"some": ["citizenship", "US", "NL"]},
 						{"every": ["citizenship", "!SA"]},
-						{"every": ["age", "adult", "driving"]}
+						{"every": ["age", "adult"]}
 					]
 				}
 			}
@@ -56,8 +55,8 @@ func main() {
 	alice, err := abe.Issue(
 		priv,
 		[]string{
-			"citizenship:NL",
 			"citizenship:!SA",
+			"citizenship:US",
 			"email:rob.fielding@gmail.com",
 			"age:adult",
 		},
