@@ -1,4 +1,4 @@
-package main
+package abe
 
 import (
 	//"github.com/cloudflare/circl/group"
@@ -543,74 +543,4 @@ func (e Expr) FlatAnd() Expr {
 		return r
 	}
 	return e
-}
-
-func main() {
-	// Set up the CA
-	priv := Hs("farkfark")
-	pub := CA(priv)
-
-	// Plan the keys for the padlock
-	W := sha256.Sum256([]byte("pencil"))
-	R := sha256.Sum256([]byte("paper"))
-
-	keyMap := map[string][]byte{"Write": W[:], "Read": R[:]}
-
-	// Create the padlock
-	e, err := AsSpec(`{
-		"label": "ADULT",
-		"fg": "white",
-		"bg": "black",
-		"cases": {
-			"isOwner": {
-				"key": "Write",
-				"expr": {
-					"and": [
-						{"requires": "isAdultCit"},
-						{"some": ["email","rob.fielding@gmail.com","rrr00bb@yahoo.com"]}
-					]
-				}
-			},
-			"isAdultCit": {
-				"key": "Read",
-				"expr": {
-					"and": [
-						{"some": ["citizenship", "US", "NL"]},
-						{"every": ["citizenship", "!SA"]},
-						{"every": ["age", "adult", "driving"]}
-					]
-				}
-			}
-		}
-	}`, pub, keyMap)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("eN: %s\n", AsJson(e))
-
-	// Create a certificate
-	alice, err := Issue(
-		priv,
-		[]string{
-			"citizenship:NL",
-			"citizenship:!SA",
-			"email:rob.fielding@gmail.com",
-			"age:adult",
-		},
-	)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("alice: %s\n", AsJson(alice))
-
-	// Attempt an unlock
-	granted, err := e.Unlock(alice)
-	if err != nil {
-		panic(err)
-	}
-	for k, v := range granted {
-		fmt.Printf("granted %s: %s\n", k, hex.EncodeToString(v))
-		fmt.Printf("expected %s: %s\n", k, hex.EncodeToString(keyMap[k]))
-	}
 }
