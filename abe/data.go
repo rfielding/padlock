@@ -1,19 +1,14 @@
 package abe
 
 import (
-	"github.com/cloudflare/circl/ecc/bls12381/ff"  
+  //ec "github.com/cloudflare/circl/ecc/bls12381"
+	"github.com/cloudflare/circl/ecc/bls12381/ff"
 )
-// This is a blinded certificate that has some number
-// of attributes in it.
-//
-// L[v] is a function that returns L[v] = (L_x[h],L_y[h]) such that h=H[v]
-// This is a way to do a 1D to 2D lagrange interpolated polynomial
-//
-// L[v] is an oracle that answers questions correctly when it knows, and wrongly when it does not.
-// Correct answers will be on the Elliptic Curve.
-//
+
+// This is a set of attested facts, including the signer key
 type Certificate struct {
-	Facts map[string][]byte
+  Signer []byte `json:"signer"`
+	Facts map[string][]byte `json:"facts"`
 }
 
 type Spec struct {

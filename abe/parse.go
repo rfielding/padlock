@@ -37,10 +37,21 @@ func Lagrange(v *ff.Scalar, x []*ff.Scalar, y []*ff.Scalar) *ff.Scalar {
 	return sum
 }
 
+func (c *Certificate) Cert() (*ec.G2,error) {
+	p := ec.G2Generator()
+	err := p.SetBytes(c.Signer)
+	if err != nil {
+		return nil,fmt.Errorf("Cannot decode signer: %v", err)
+	}
+	return p, nil
+}
+
 // Issue a certificate by calculating a map from known values to signed points,
 // where unknown values map to arbitrary points.
 func Issue(priv *ff.Scalar, facts []string) (Certificate, error) {
+	pubBytes := CA(priv).Bytes()
 	cert := Certificate{
+		Signer: pubBytes,
 		Facts: make(map[string][]byte),
 	}
 	for j := 0; j < len(facts); j++ {

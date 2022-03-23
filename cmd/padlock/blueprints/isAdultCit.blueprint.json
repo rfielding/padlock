@@ -1,0 +1,26 @@
+{
+		"label": "ADULT",
+		"fg": "white",
+		"bg": "black",
+		"cases": {
+			"isOwner": {
+				"key": "Write",
+				"expr": {
+					"and": [
+						{"requires": "isAdultCit"},
+						{"some": ["email","rob.fielding@gmail.com","rrr00bb@yahoo.com"]}
+					]
+				}
+			},
+			"isAdultCit": {
+				"key": "Read",
+				"expr": {
+					"and": [
+						{"some": ["citizenship", "US", "NL"]},
+						{"some": ["citizenship", "!SA"]},
+						{"some": ["age", "adult"]}
+					]
+				}
+			}
+		}
+}

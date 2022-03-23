@@ -1,0 +1,73 @@
+{
+  "blueprint": "{\n\t\t\"label\": \"ADULT\",\n\t\t\"fg\": \"white\",\n\t\t\"bg\": \"black\",\n\t\t\"cases\": {\n\t\t\t\"isOwner\": {\n\t\t\t\t\"key\": \"Write\",\n\t\t\t\t\"expr\": {\n\t\t\t\t\t\"and\": [\n\t\t\t\t\t\t{\"requires\": \"isAdultCit\"},\n\t\t\t\t\t\t{\"some\": [\"email\",\"rob.fielding@gmail.com\",\"rrr00bb@yahoo.com\"]}\n\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t},\n\t\t\t\"isAdultCit\": {\n\t\t\t\t\"key\": \"Read\",\n\t\t\t\t\"expr\": {\n\t\t\t\t\t\"and\": [\n\t\t\t\t\t\t{\"some\": [\"citizenship\", \"US\", \"NL\"]},\n\t\t\t\t\t\t{\"some\": [\"citizenship\", \"!SA\"]},\n\t\t\t\t\t\t{\"some\": [\"age\", \"adult\"]}\n\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t}\n\t\t}\n}\n",
+  "label": "ADULT",
+  "fg": "white",
+  "bg": "black",
+  "unlocks": [
+    {
+      "key": "Write",
+      "and": [
+        "citizenship:US",
+        "citizenship:!SA",
+        "age:adult",
+        "email:rob.fielding@gmail.com"
+      ],
+      "k": "PwCSenGTRe3UqDFlmdOzKIV5h1R/iIQwaGEWH/oJZH4=",
+      "pubf": "FlqoZMgL9uaFcwMbZVlSLfAbD5H3Ynpis9b8w/LBNZqoVLEkRqprJ5P4S7PHKi/jFQxr64fyCJ+GAz1QJKHIdAAtCs02RN4ykaaDLJai89eMQg6NNy5Lv85qwyNIvv4VEzdkfxv6lB/Sy0glHav/0h29NT34S9JUOIOhIMsBrdGhJEiFMg20OBDj0fTGDxWvB/61gyYOSnKqUhNKJBdM61oZGjbqD4d5WLLSTAaSd54kjT/LSfjt9k9ECya04dUB"
+    },
+    {
+      "key": "Write",
+      "and": [
+        "citizenship:US",
+        "citizenship:!SA",
+        "age:adult",
+        "email:rrr00bb@yahoo.com"
+      ],
+      "k": "PwCSenGTRe3UqDFlmdOzKIV5h1R/iIQwaGEWH/oJZH4=",
+      "pubf": "CL2Vcvu0waUsVKq+yiFOrXY9Mt6iE/g78yrq2jSCSlBttINd4CnWY8YnF/dRM8YIGb7DL4ko95OE5fI5EoIYbkaOzGcX8wrpduKy/kFywKlDTnb6JlR1jnOfA+72zfhmBMd9JsyINCX6xDPxfUf+TN6IQt12h/xReH7wXJlS8Tps7zGWHb+tWfcSRlxHg3jRB7Qhp6lgdtUJpL9xqeip5QEd5xs+MXoXLZ7owvKAJYO8F09U6dFbZSBZLFdhnX7t"
+    },
+    {
+      "key": "Write",
+      "and": [
+        "citizenship:NL",
+        "citizenship:!SA",
+        "age:adult",
+        "email:rob.fielding@gmail.com"
+      ],
+      "k": "PwCSenGTRe3UqDFlmdOzKIV5h1R/iIQwaGEWH/oJZH4=",
+      "pubf": "Furpx0v+blEjY1YM2RIhcgVgxx0FyFV/oRdleHFnoMi4dMolzwx+0xL+clJQOcA6BhWXUVMVyyDZWFrG8ER1H97YsQ2MlxLDfsCKq94ianu/MJ0ryNOyPHPpHGat+ZuuED4eDb5Pl5d9NKMoKaWF7x7ziezK0MX4OT8X6gGDcAMfRssOwLyf2TZxQiAdXD3+ANMsKAjmaa32zxum4mzBdsX8Ec4Whq7tvgZufog6nq6CBNtu5ofm56NXOeeRuE4P"
+    },
+    {
+      "key": "Write",
+      "and": [
+        "citizenship:NL",
+        "citizenship:!SA",
+        "age:adult",
+        "email:rrr00bb@yahoo.com"
+      ],
+      "k": "PwCSenGTRe3UqDFlmdOzKIV5h1R/iIQwaGEWH/oJZH4=",
+      "pubf": "AWLYaKsyfec9nh7ahwYbIuHzECxzfQFX2wyC7Uvl5sFNVuwg1BFYO6Vu1ehttF6jAGBHOJVmWDY43Z7LaOwkXKBRUVzGB5uPI1EjS5zTEUvZr85WvAeId1q/xIB2kwixF/NrhrjGRjgqQSE5yIpg1QYs9zMrwq8Hx76Pt+JOq7Qo1g5DeIrz6i5Nn79QGGcmA5SmZf3ZbMwjPpCRxIafcBuRCXS+dH2p6/35wwlnQVoTsnquwZnB1qKy/eykZunR"
+    },
+    {
+      "key": "Read",
+      "and": [
+        "citizenship:US",
+        "citizenship:!SA",
+        "age:adult"
+      ],
+      "k": "m5qNBafsNTvahPnBuzF4wpneMAG16XBQjdyInEh/kso=",
+      "pubf": "FjCGxJkuyKtTwoXAeBuGuYYF2P/YcQkd6WP7iv/y9dtH4Wu3dDdHIKa1BaFnTEyLF3pTabNQR4WpE+I5JkSeJa63qjUZj2274H4XzC4OWBPTrllE4THx0T6Bn5XzpP6OEuoPRKb1jWanyyYtD6nKUGetpOx0F4C5IzhnApPYW6KP8M+66AK1UmugWiQ1V5w+GOECj63O7eMKpFza5AAypB5hRw05ay86aLfWYcjg0NgJoIazDAgbftaxEz8b9M9y"
+    },
+    {
+      "key": "Read",
+      "and": [
+        "citizenship:NL",
+        "citizenship:!SA",
+        "age:adult"
+      ],
+      "k": "m5qNBafsNTvahPnBuzF4wpneMAG16XBQjdyInEh/kso=",
+      "pubf": "Ey6bUYq9xGMKSsl304OdvxiLmYTdoL4JjMHgsiXIu3vXtLaywfBDP6EL8tcbmgzkBFxNEqE6iDDViBMSf/Ukx8q2DkUpjes7PIUlxuNuxUcLeJRA7n35EZtYLKj1VjViGQHV0Yd9J9Rx3mq7IBo8e5bFary51xg36O/l5b/oX+mUdLOZCbow17dvkT54avudGRRzrFaECXOtLjJVsx8VVGhzKq6sivQD5/wQLoFWkQ/jkV0H23rCHsvjCLdyhoit"
+    }
+  ],
+  "capub": "EmtgKiWirc0BgesmSuFfaF+cvhxjb6jpCNQ0ouKZKGZDgCGgJtPvhwol1d0LHTbGEdi+BxKsa6aliyftVdJ3PLdeJEZWCJ2WrByytzym2CVNc21iR8ZE3pdCKHikkhQRC3FOU/MgSY2ShluKFyJ5y3fJAjwD3BKzupNP+rWpAZ7srM3ybnChUjgw1TK7p4HXGX7DkeUS7jseNJm11x88pKVx9ANBynH7Y4tF5iH9d9wbiWE3ZFsajPKHE17h9e4S"
+}
