@@ -65,7 +65,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("alice: %s\n", abe.AsJson(alice))
+	fmt.Printf("certificate alice: %s\n", abe.AsJson(alice))
 
 	// Attempt an unlock
 	granted, err := e.Unlock(alice)
@@ -73,7 +73,7 @@ func main() {
 		panic(err)
 	}
 	for k, v := range granted {
-		fmt.Printf("granted %s: %s\n", k, hex.EncodeToString(v))
-		fmt.Printf("expected %s: %s\n", k, hex.EncodeToString(keyMap[k]))
+		fmt.Printf("alice granted %s: %s\n", k, hex.EncodeToString(v))
+		fmt.Printf("alice expected %s: %s\n", k, hex.EncodeToString(keyMap[k]))
 	}
 }
