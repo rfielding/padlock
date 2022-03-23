@@ -38,8 +38,8 @@ func main() {
 				"expr": {
 					"and": [
 						{"some": ["citizenship", "US", "NL"]},
-						{"every": ["citizenship", "!SA"]},
-						{"every": ["age", "adult"]}
+						{"some": ["citizenship", "!SA"]},
+						{"some": ["age", "adult"]}
 					]
 				}
 			}
