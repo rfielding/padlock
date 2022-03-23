@@ -110,7 +110,6 @@ func G1SumPairXor(signedFacts []*ec.G1, b *ec.G2, k []byte) ([]byte, error) {
 func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	// Parse the lock specification
 	var sp Spec
-	sp.Blueprint = s
 	err := json.Unmarshal([]byte(s), &sp)
 	if err != nil {
 		return sp, fmt.Errorf("parse error: %v", err)
@@ -119,6 +118,7 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	if err != nil {
 		return sp, err
 	}
+	sp.Blueprint = s
 	// Pair(sum_i[ f H1(a_i)], pub)
 	for u, _ := range sp.Unlocks {
 		f := R()

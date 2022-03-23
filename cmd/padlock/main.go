@@ -50,7 +50,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("eN: %s\n", e.Blueprint)
+	fmt.Printf("Blueprint: %s\n", e.Blueprint)
 
 	// Create a certificate
 	alice, err := abe.Issue(
