@@ -38,19 +38,6 @@ func Lagrange(v *ff.Scalar, x []*ff.Scalar, y []*ff.Scalar) *ff.Scalar {
 	return sum
 }
 
-// This is a blinded certificate that has some number
-// of attributes in it.
-//
-// L[v] is a function that returns L[v] = (L_x[h],L_y[h]) such that h=H[v]
-// This is a way to do a 1D to 2D lagrange interpolated polynomial
-//
-// L[v] is an oracle that answers questions correctly when it knows, and wrongly when it does not.
-// Correct answers will be on the Elliptic Curve.
-//
-type Certificate struct {
-	Facts map[string][]byte
-}
-
 // Issue a certificate by calculating a map from known values to signed points,
 // where unknown values map to arbitrary points.
 func Issue(priv *ff.Scalar, facts []string) (Certificate, error) {
@@ -124,6 +111,7 @@ func G1SumPairXor(signedFacts []*ec.G1, b *ec.G2, k []byte) ([]byte, error) {
 func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 	// Parse the lock specification
 	var sp Spec
+	sp.Blueprint = s
 	err := json.Unmarshal([]byte(s), &sp)
 	if err != nil {
 		return sp, fmt.Errorf("parse error: %v", err)
@@ -213,36 +201,6 @@ func AsJson(v interface{}) string {
 	return string(j)
 }
 
-type Spec struct {
-	Label      string          `json:"label"`
-	Foreground string          `json:"fg,omitempty"`
-	Background string          `json:"bg,omitempty"`
-	Cases      map[string]Case `json:"cases,omitempty"`
-	Unlocks    []Unlock        `json:"unlocks,omitempty"`
-	CAPub      []byte          `json:"capub,omitempty"`
-}
-
-type Unlock struct {
-	Key  string   `json:"key,omitempty"`
-	And  []string `json:"and,omitempty"`
-	K    []byte   `json:"k,omitempty"` // The secret! needs xor vs target
-	Pubf []byte   `json:"pubf,omitempty"`
-}
-
-type Case struct {
-	Diff *ff.Scalar `json:"diff"`
-	Key  string     `json:"key"`
-	Expr Expr       `json:"expr"`
-}
-
-type Expr struct {
-	And      []Expr   `json:"and,omitempty"`
-	Or       []Expr   `json:"or,omitempty"`
-	Is       string   `json:"is,omitempty"`
-	Some     []string `json:"some,omitempty"`
-	Every    []string `json:"every,omitempty"`
-	Requires string   `json:"requires,omitempty"`
-}
 
 func (s Spec) Normalize() (Spec, error) {
 	r := Spec{}
