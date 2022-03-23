@@ -1,5 +1,8 @@
 package abe
 
+import (
+	"github.com/cloudflare/circl/ecc/bls12381/ff"  
+)
 // This is a blinded certificate that has some number
 // of attributes in it.
 //

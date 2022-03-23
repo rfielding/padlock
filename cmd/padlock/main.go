@@ -3,21 +3,15 @@ package main
 import (
 	"github.com/rfielding/padlock/abe"
 	//"github.com/cloudflare/circl/group"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	ec "github.com/cloudflare/circl/ecc/bls12381"
-	"github.com/cloudflare/circl/ecc/bls12381/ff"
-	"log"
-	"sort"
 )
 
 func main() {
 	// Set up the CA
-	priv := abc.Hs("farkfark")
-	pub := abc.CA(priv)
+	priv := abe.Hs("farkfark")
+	pub := abe.CA(priv)
 
 	// Plan the keys for the padlock
 	W := sha256.Sum256([]byte("pencil"))
@@ -56,7 +50,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("eN: %s\n", abe.Blueprint)
+	fmt.Printf("eN: %s\n", e.Blueprint)
 
 	// Create a certificate
 	alice, err := abe.Issue(

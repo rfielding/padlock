@@ -4,7 +4,6 @@ import (
 	//"github.com/cloudflare/circl/group"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	ec "github.com/cloudflare/circl/ecc/bls12381"
