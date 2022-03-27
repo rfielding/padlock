@@ -2,7 +2,10 @@
 
 (
 cd `dirname $0`
-go build 
+#go mod vendor
+#go mod tidy
+rm ./padlock
+go build
 
 # Create Alice and Bob with the CA
 ./padlock --priv farkfark --facts ./requests/bob.request.json > ./users/bob.cert.json

@@ -8,6 +8,12 @@ and using BLS Elliptic Curves, so that there are proper point hashes.
 This means that we should be able to publicly encrypt to a set of attributes
 without involving the CA.  The CA will only be needed to issue certificates.
 
+# Smoke Test
+
+```bash
+./cmd/padlock/testit.sh
+```
+
 # Facts
 
 A user makes a request to a CA, asking that it attest to some set of attributes.
