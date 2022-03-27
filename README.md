@@ -252,6 +252,6 @@ a value that proves that the value is absent.  (ie: Produce a number that proves
 There is the problem of whether values are mutually exclusive, such as `citizen:US` and `citizen:IL`.
 
 
-Most of the difficulty in this scheme is in translating a convenient language into `and of or` format.
+Most of the difficulty in this scheme is in translating a convenient language into "and over or" format.
 The reason to use Elliptic Curves with Parings and Point Hash, is to limit collusion to an individual file at least.
 It is apparently possible to go further and limit collusion even on the same file (however, I cannot convince myself of this fact).
