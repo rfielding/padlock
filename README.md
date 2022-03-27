@@ -216,13 +216,41 @@ It is extremely important that:
 
 > Warning! The use of this construction limits possibilities of collusion to individual files.  Two rogue users colluding such as an `age:adult` colluding with a non-adult from `citizen:US`.  There are claims made in some cpabe implementations that collusion is cryptographically impossible in all cases.  They use Lagrange Polynomial interpolation to mix attributes.  But in my implementations, the many ways I have tried, I have found subtle ways to collude on the same file (only) under the same CA.  This limits the disaster that could be caused by rogue users to individual files.  But it's TBD to figure out to limit collusion cryptographically in every case.  The implementation of the curve hides the raw values of the points, which makes the Lagrange Polynomial interpolation difficult to implement.
 
-A simplified form of the idea would be to imagine a less secure implemenation of the idea:
+# Implementation Issue
+
+A simplified form of the idea would be to imagine a less secure implementation of the idea:
 
 - A fact is a secret hash made by the CA.  ie: `Sha256("citizen:US" + caSecret)`
 - So, each attested fact has a secret, and deterministic value.
 - To _AND_ together facts, _xor_ their attested hashes.
 - To _OR_ together facts, calculate exhaustively all possible _AND_ cases.
 - Store a value to _xor_ the case with to produce a target key.
+- A negative fact works just like its positive fact, except something is wrong if both the truth and falsity are attested.
+- Using _AND_ and _OR_ and negated facts, we can produce _witness_ values for them.  But in general, it is not possible to produce witnesses on a general _NOT_ function.  There would need to be a witness for each possible way of leaving the value unsatisfied.
+
+Example of normal boolean logic:
+
+- `and(a,b) = (a*b)`
+- `not(a) = (1 - a)`
+- `or(a,b) = not( and(not(a), not(b)) )`
+
+Since we don't need to produce any specific secret _witness_ of these values, there is no problem producing a `not`.
+This kind of logic doesn't help us to produce keys, because we need no proof that we know values for `a` or `b`.
+
+But if this is done with witnesses (ie: Constructivist Logic):
+
+- `a = Hash("a"+s)`
+- `b = Hash("b"+s)`
+- `and(a,b) = (a xor b)`
+- `or(a,b) = a | or(a,b) = b`
+
+The value `a` is proof that the signer knew `"a"` and `s`.
+The `or` function is a matter of reducing `or(a,b)` to a proof of either `a` or `b` proof.
+A `not` doesn't have an obvious way of attesting it in general.
+There may be a way to take the _whole_ user set of facts, and deterministically produce
+a value that proves that the value is absent.  (ie: Produce a number that proves that the fact isn't anywhere in the certificate, in an unforgeable way.)
+There is the problem of whether values are mutually exclusive, such as `citizen:US` and `citizen:IL`.
+
 
 Most of the difficulty in this scheme is in translating a convenient language into `and of or` format.
 The reason to use Elliptic Curves with Parings and Point Hash, is to limit collusion to an individual file at least.
