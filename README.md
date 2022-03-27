@@ -254,4 +254,6 @@ There is the problem of whether values are mutually exclusive, such as `citizen:
 
 Most of the difficulty in this scheme is in translating a convenient language into "and over or" format.
 The reason to use Elliptic Curves with Parings and Point Hash, is to limit collusion to an individual file at least.
+Collusion is to take an `a` issued to one user and a `b` from a different user, and forming `and(a,b)` with it.
+This is an unwanted form of privilege escalation.
 It is apparently possible to go further and limit collusion even on the same file (however, I cannot convince myself of this fact).
