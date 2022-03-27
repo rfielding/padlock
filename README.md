@@ -79,7 +79,7 @@ The padlock's creation need not involve the CA; and it can be created offline.
 
 > Given a blueprint for a padlock, a padlock can be created.
 
-```json
+```bash
 padlock \
   --cert ./users/alice.cert.json \
 	--blueprint ./blueprints/isAdultCit.blueprint.json \
@@ -182,7 +182,7 @@ The _unlock_ output can be used as key material for a decrypt key in the _Read_ 
 case, it can be used to deterministically generate a signing key (TBD).  The point is to
 be able to put on padlocks that can enforce _Read_ and _Write_ rules with _cpabe_.
 
-```json
+```bash
 ./padlock \
   --cert ./users/alice.cert.json \
 	--padlock ./padlocks/isAdultCit.padlock.json
@@ -191,6 +191,10 @@ be able to put on padlocks that can enforce _Read_ and _Write_ rules with _cpabe
 In this case, a set of keys comes back by name.
 
 # Mathematical Basis
+
+A pairing function `e` ends up with the same value when the CA signing secret `s` and the file secret nonce `f` are swapped.
+This is why it is possible to create a padlock without assistance from the CA, and to unlock without assistance from the CA;
+such that the CA is only involved in attesting to facts about a user.
 
 ![pairing equation](https://render.githubusercontent.com/render/math?math=\color{gray}\hat%20e[s%20H1_0%2Bs%20H1_1%2B\cdots,f%20G2]=\hat%20e[f%20H1_0%2Bf%20H1_1%2B\cdots,s%20G2])
 
