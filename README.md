@@ -203,7 +203,7 @@ This is why it is possible to create a padlock without assistance from the CA, a
 such that the CA is only involved in attesting to facts about a user.
 
 - A CA public key secretly signed with `s` paired with a sum of attributes signed with `f` can be used to make a padlock.
-- A file public key secretly signed with `f` paired with a sum of attested attributes signed with `s`.
+- A file public key secretly signed with `f` paired with a sum of attested attributes signed with `s` can be used to unlock a padlock with a certificate.
 
 ![pairing equation](https://render.githubusercontent.com/render/math?math=\color{gray}\hat%20e[s%20H1_0%2Bs%20H1_1%2B\cdots,f%20G2]=\hat%20e[f%20H1_0%2Bf%20H1_1%2B\cdots,s%20G2])
 
