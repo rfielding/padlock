@@ -215,3 +215,15 @@ It is extremely important that:
 - This is similar to Identity Based Encryption.  Exception IBE is one-attribute only.  IBE allows for encryption to be made to a chosen-text public key; such as an email address.  That way, encryption can be made to an email address, under the authority of a CA.  And the CA must issue the private key for that email address later.  This is the opposite of how public key crypto usually works, where there is no direct control over what the public key is, so that CAs need to explicitly sign public keys.  Because of this, we only need to trust that a CA won't issue a certificate with untruthful information in it.
 
 > Warning! The use of this construction limits possibilities of collusion to individual files.  Two rogue users colluding such as an `age:adult` colluding with a non-adult from `citizen:US`.  There are claims made in some cpabe implementations that collusion is cryptographically impossible in all cases.  They use Lagrange Polynomial interpolation to mix attributes.  But in my implementations, the many ways I have tried, I have found subtle ways to collude on the same file (only) under the same CA.  This limits the disaster that could be caused by rogue users to individual files.  But it's TBD to figure out to limit collusion cryptographically in every case.  The implementation of the curve hides the raw values of the points, which makes the Lagrange Polynomial interpolation difficult to implement.
+
+A simplified form of the idea would be to imagine a less secure implemenation of the idea:
+
+- A fact is a secret hash made by the CA.  ie: `Sha256("citizen:US" + caSecret)`
+- So, each attested fact has a secret, and deterministic value.
+- To _AND_ together facts, _xor_ their attested hashes.
+- To _OR_ together facts, calculate exhaustively all possible _AND_ cases.
+- Store a value to _xor_ the case with to produce a target key.
+
+Most of the difficulty in this scheme is in translating a convenient language into `and of or` format.
+The reason to use Elliptic Curves with Parings and Point Hash, is to limit collusion to an individual file at least.
+It is apparently possible to go further and limit collusion even on the same file (however, I cannot convince myself of this fact).
