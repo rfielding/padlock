@@ -143,8 +143,8 @@ This is the essence of `cpabe` (`ciphertext policy attribute based encryption`).
 
 # Unlocks
 
-```json
-alice private Certificate
+```yaml
+# alice private Certificate
 {
   "signer": "EmtgKiWirc0BgesmSuFfaF+cvhxjb6jpCNQ0ouKZKGZDgCGgJtPvhwol1d0LHTbGEdi+BxKsa6aliyftVdJ3PLdeJEZWCJ2WrByytzym2CVNc21iR8ZE3pdCKHikkhQRC3FOU/MgSY2ShluKFyJ5y3fJAjwD3BKzupNP+rWpAZ7srM3ybnChUjgw1TK7p4HXGX7DkeUS7jseNJm11x88pKVx9ANBynH7Y4tF5iH9d9wbiWE3ZFsajPKHE17h9e4S",
   "facts": {
@@ -154,7 +154,7 @@ alice private Certificate
     "email:rob.fielding@gmail.com": "D8Jja59zg7zgE27eMexHEnG5WhQVcXrFgxHoSc828/blmr+L0g1zSXmAbHKp32OIAiKTPZNEi+JSGVAQFPkdeiCMQ3dDRLDix9p+2XWRUu74QjGf81JqeiNwVAOqf6/N"
   }
 }
-bob private Certificate
+# bob private Certificate
 {
   "signer": "EmtgKiWirc0BgesmSuFfaF+cvhxjb6jpCNQ0ouKZKGZDgCGgJtPvhwol1d0LHTbGEdi+BxKsa6aliyftVdJ3PLdeJEZWCJ2WrByytzym2CVNc21iR8ZE3pdCKHikkhQRC3FOU/MgSY2ShluKFyJ5y3fJAjwD3BKzupNP+rWpAZ7srM3ybnChUjgw1TK7p4HXGX7DkeUS7jseNJm11x88pKVx9ANBynH7Y4tF5iH9d9wbiWE3ZFsajPKHE17h9e4S",
   "facts": {
@@ -166,12 +166,12 @@ bob private Certificate
     "email:bob@gmail.com": "Gb6k3VvMdcQg3jvijhPxMGw606VZbc2yraLVftjDaPAGUNBlEtLXf6nH814Uv0/HGY4xoB13l27pwKDPtAEWU3kJW0zYXqxflkQgzx9Mhh9FXc81nYMOgwU3Tvj8HqaQ"
   }
 }
-alice Unlocks
+# alice Unlocks
 {
   "Read": "m5qNBafsNTvahPnBuzF4wpneMAG16XBQjdyInEh/kso=",
   "Write": "PwCSenGTRe3UqDFlmdOzKIV5h1R/iIQwaGEWH/oJZH4="
 }
-bob Unlocks
+# bob Unlocks
 {
   "Read": "m5qNBafsNTvahPnBuzF4wpneMAG16XBQjdyInEh/kso="
 }
@@ -195,6 +195,9 @@ In this case, a set of keys comes back by name.
 A pairing function `e` ends up with the same value when the CA signing secret `s` and the file secret nonce `f` are swapped.
 This is why it is possible to create a padlock without assistance from the CA, and to unlock without assistance from the CA;
 such that the CA is only involved in attesting to facts about a user.
+
+- A CA public key secretly signed with `s` paired with a sum of attributes signed with `f` can be used to make a padlock.
+- A file public key secretly signed with `f` paired with a sum of attributes signed with `s` to attest to the attributes.
 
 ![pairing equation](https://render.githubusercontent.com/render/math?math=\color{gray}\hat%20e[s%20H1_0%2Bs%20H1_1%2B\cdots,f%20G2]=\hat%20e[f%20H1_0%2Bf%20H1_1%2B\cdots,s%20G2])
 
