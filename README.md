@@ -228,7 +228,7 @@ A simplified form of the idea would be to imagine a less secure implementation o
 - A negative fact works just like its positive fact, except something is wrong if both the truth and falsity are attested.
 - Using _AND_ and _OR_ and negated facts, we can produce _witness_ values for them.  But in general, it is not possible to produce witnesses on a general _NOT_ function.  There would need to be a witness for each possible way of leaving the value unsatisfied.
 
-Example of normal boolean logic:
+Example of normal boolean logic, that even works with probabilities as input:
 
 - `and(a,b) = (a*b)`
 - `not(a) = (1 - a)`
