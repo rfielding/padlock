@@ -1,13 +1,13 @@
 package main
 
 import (
-	"io/ioutil"
-	"github.com/rfielding/padlock/abe"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"flag"
+	"fmt"
+	"github.com/rfielding/padlock/abe"
+	"io/ioutil"
 )
 
 func unlockPadlock(certFile, padlockFile *string) {
@@ -97,11 +97,11 @@ func createPadlock(certFile, blueprintFile, readKeyStr, writeKeyStr *string) {
 }
 
 func main() {
-  padlockFile := flag.String("padlock", "", "required to unlock: padlock file to unlock with cert")
+	padlockFile := flag.String("padlock", "", "required to unlock: padlock file to unlock with cert")
 	blueprintFile := flag.String("blueprint", "./blueprints/isAdultCit.padlock.json", "required to make padlock: blueprint file to generate a padlock")
-	factsFile := flag.String("facts","./requests/alice.request.json","required to create cert: file with cert facts to be signed")
-	certFile := flag.String("cert","","required to make a padlock, and unlock: cert file to make a padlock with a blueprint")
-	privStr := flag.String("priv","","required to create cert: privateKeyPassword")
+	factsFile := flag.String("facts", "./requests/alice.request.json", "required to create cert: file with cert facts to be signed")
+	certFile := flag.String("cert", "", "required to make a padlock, and unlock: cert file to make a padlock with a blueprint")
+	privStr := flag.String("priv", "", "required to create cert: privateKeyPassword")
 	rk := sha256.Sum256([]byte("Read"))
 	wk := sha256.Sum256([]byte("Write"))
 	readKeyStr := flag.String("readKey", hex.EncodeToString(rk[:]), "required to make a padlock: target read key for decrypt")
@@ -117,7 +117,7 @@ func main() {
 
 	// We must be issuing a cert
 	if len(*privStr) > 0 {
-		issueCert(privStr, factsFile	)
+		issueCert(privStr, factsFile)
 		return
 	}
 

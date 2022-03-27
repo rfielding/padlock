@@ -1,18 +1,18 @@
 package abe
 
 import (
-  //ec "github.com/cloudflare/circl/ecc/bls12381"
+	//ec "github.com/cloudflare/circl/ecc/bls12381"
 	"github.com/cloudflare/circl/ecc/bls12381/ff"
 )
 
 // This is a set of attested facts, including the signer key
 type Certificate struct {
-  Signer []byte `json:"signer"`
-	Facts map[string][]byte `json:"facts"`
+	Signer []byte            `json:"signer"`
+	Facts  map[string][]byte `json:"facts"`
 }
 
 type Spec struct {
-  Blueprint  string          `json:"blueprint"`
+	Blueprint  string          `json:"blueprint"`
 	Label      string          `json:"label"`
 	Foreground string          `json:"fg,omitempty"`
 	Background string          `json:"bg,omitempty"`
