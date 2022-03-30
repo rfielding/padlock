@@ -258,7 +258,7 @@ An attempt to combine boolean logic with proof-relevant logic might go something
 - `A = Hash("a" + s)`
 - `B = Hash("b" + s)`
 - `And(a:A, b:B) = and(a,b) : And(A,B)`
-- `Not(a:A) = (1-a) : (N + -A)` // calculating `Not(a:A)` should require secret `s`
+- `Not(a:A) = (1-a) : (N + -A)` // this is "not(proof of A)", which doesnt mean "proof of not A"
 - `Or(a:A, b:B) = or(a,b) : Or(A, B)`
 
 Most of the difficulty in this scheme is in translating a convenient language into "and over or" format.
