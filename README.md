@@ -232,7 +232,7 @@ Example of normal boolean logic, that even works with probabilities as input:
 
 - `and(a,b) = (a*b)`
 - `not(a) = (1 - a)`
-- `or(a,b) = not( and(not(a), not(b)) )`
+- `or(a,b) = a + b - a*b`
 
 Since we don't need to produce any specific secret _witness_ of these values, there is no problem producing a `not`.
 This kind of logic doesn't help us to produce keys, because we need no proof that we know values for `a` or `b`.
@@ -241,7 +241,7 @@ But if this is done with witnesses (ie: Constructivist Logic):
 
 - `a = Hash("a"+s)`
 - `b = Hash("b"+s)`
-- `and(a,b) = (a xor b)`
+- `and(a,b) = (a*b)`   // Any non-trivial commutative, associative function will do
 - `or(a,b) = a | or(a,b) = b`
 
 The value `a` is proof that the signer knew `"a"` and `s`.
