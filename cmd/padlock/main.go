@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"github.com/rfielding/padlock/abe"
 	"io/ioutil"
+	"encoding/base64"
 )
 
-func unlockPadlock(certFile, padlockFile *string) {
+func unlockPadlock(certFile, padlockFile *string, key *string) {
 	certBytes, err := ioutil.ReadFile(*certFile)
 	if err != nil {
 		panic(fmt.Sprintf("need a cert to know which public key to sign to: %v", err))
@@ -34,6 +35,11 @@ func unlockPadlock(certFile, padlockFile *string) {
 	granted, err := e.Unlock(cert)
 	if err != nil {
 		panic(err)
+	}
+
+	if len(*key) > 0 {
+		fmt.Printf("%s", base64.StdEncoding.EncodeToString(granted[*key]))
+		return
 	}
 	fmt.Printf("%s\n", abe.AsJson(granted))
 }
@@ -106,12 +112,12 @@ func main() {
 	wk := sha256.Sum256([]byte("Write"))
 	readKeyStr := flag.String("readKey", hex.EncodeToString(rk[:]), "required to make a padlock: target read key for decrypt")
 	writeKeyStr := flag.String("writeKey", hex.EncodeToString(wk[:]), "required to make a padlock: target write key for sign")
-
+  key := flag.String("key", "", "pick a key to return when unlocking")
 	flag.Parse()
 
 	// Unlock a padlock
 	if len(*padlockFile) > 0 {
-		unlockPadlock(certFile, padlockFile)
+		unlockPadlock(certFile, padlockFile, key)
 		return
 	}
 

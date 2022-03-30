@@ -23,4 +23,7 @@ echo alice Unlocks
 ./padlock --cert ./users/alice.cert.json --padlock ./padlocks/isAdultCit.padlock.json
 echo bob Unlocks
 ./padlock --cert ./users/bob.cert.json --padlock ./padlocks/isAdultCit.padlock.json
+echo pick a Read key from alice
+./padlock --cert ./users/alice.cert.json --padlock ./padlocks/isAdultCit.padlock.json --key Read
+echo
 )
