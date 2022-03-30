@@ -241,18 +241,25 @@ This kind of logic doesn't help us to produce keys, because we need no proof tha
 
 But if this is done with witnesses (ie: Constructivist Logic):
 
-- `a = Hash("a"+s)`
-- `b = Hash("b"+s)`
-- `and(a,b) = (a*b)`   // Any non-trivial commutative, associative function will do
-- `or(a,b) = a | or(a,b) = b`
+- `A = Hash("a"+s)`
+- `B = Hash("b"+s)`
+- `And(A,B) = (A*B)`   // Any non-trivial commutative, associative function will do
+- `Or(A,B) = A ~ B`  // Reduce to A if known, or B if known
 
-The value `a` is proof that the signer knew `"a"` and `s`.
-The `or` function is a matter of reducing `or(a,b)` to a proof of either `a` or `b` proof.
-A `not` doesn't have an obvious way of attesting it in general.
+The value `A` is proof that the signer knew `"a"` and `s`.
+The `Or` function is a matter of reducing `Or(A,B)` to a proof of either `A` or `B` proof.
+A `Not` doesn't have an obvious way of attesting it in general.
 There may be a way to take the _whole_ user set of facts, and deterministically produce
 a value that proves that the value is absent.  (ie: Produce a number that proves that the fact isn't anywhere in the certificate, in an unforgeable way.)
 There is the problem of whether values are mutually exclusive, such as `citizen:US` and `citizen:IL`.
 
+An attempt to combine boolean logic with proof-relevant logic might go something like this.
+
+- `A = Hash("a" + s)`
+- `B = Hash("b" + s)`
+- `And(a:A, b:B) = and(a,b) : And(A,B)`
+- `Not(a:A) = (1-a) : (N + -A)` // calculating `Not(a:A)` should require secret `s`
+- `Or(a:A, b:B) = or(a,b) : Or(A, B)`
 
 Most of the difficulty in this scheme is in translating a convenient language into "and over or" format.
 The reason to use Elliptic Curves with Parings and Point Hash, is to limit collusion to an individual file at least.
