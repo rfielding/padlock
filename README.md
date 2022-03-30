@@ -243,8 +243,11 @@ But if this is done with witnesses (ie: Constructivist Logic):
 
 - `A = Hash("a"+s)`
 - `B = Hash("b"+s)`
+- `-A = Hash("!a" + s)` // not is explicitly asserted, with no notions of mutual exclusion
 - `And(A,B) = (A ⊕ B)`   // A commutative, associative, idempotent function (ie: Lagrange poly)
 - `Or(A,B) = A ~ B`  // Reduce to A if known, or B if known
+
+> For simple cases where the inputs to And are unique, `*` will suffice, because idempotence is not necessary.
 
 The value `A` is proof that the signer knew `"a"` and `s`.
 The `Or` function is a matter of reducing `Or(A,B)` to a proof of either `A` or `B` proof.
@@ -258,10 +261,10 @@ An attempt to combine boolean logic with proof-relevant logic might go something
 - `A = Hash("a" + s)`
 - `B = Hash("b" + s)`
 - `And(a:A, b:B) = and(a,b) : And(A,B)`
-- `Not(a:A) = (1-a) : (N + -A)` // this is "not(proof of A)", which doesnt mean "proof of not A"
+- `Not(a:A) = (1-a) : (N + -A)` // this is "not(proof of A)", which does not mean "proof of not A"
 - `Or(a:A, b:B) = or(a,b) : Or(A, B)`
 
-> The problem lies with Not.  Calculating a non-forgeable single value for Not of an expression seems difficult.  Given a complete environment if known values might allow it to be possible; such as a list of all known facts.  Lagrange Polynomail points made of facts might allow this.
+> The problem lies with Not.  Calculating a non-forgeable single value for Not of an expression seems difficult.  Given a complete environment of known values might allow it to be possible; such as a list of all known facts.  Lagrange Polynomial points made of facts might allow this.
 
 Most of the difficulty in this scheme is in translating a convenient language into "and over or" format.
 The reason to use Elliptic Curves with Parings and Point Hash, is to limit collusion to an individual file at least.
