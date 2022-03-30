@@ -230,6 +230,8 @@ A simplified form of the idea would be to imagine a less secure implementation o
 
 Example of normal boolean logic, that even works with probabilities as input:
 
+- `a = 0 | a = 1`
+- `b = 0 | b = 1`
 - `and(a,b) = (a*b)`
 - `not(a) = (1 - a)`
 - `or(a,b) = a + b - a*b`
