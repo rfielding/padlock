@@ -332,7 +332,8 @@ But to resist collusion, use different user values
 ```
 aliceIsCitizenUS = (s - uA) * H1("citizen:us")
 bobIsAdult = (s - uB) * H1("age:adult")
-alicePub = (s/(s-u)) * G2
+alicePub = (s/(s-uA)) * G2
+bobPub = (s/(s-uB)) * G2
 
 e( aliceIsCitizenUS + bobIsAdult, alicePub)
 =
@@ -341,5 +342,5 @@ e( (s - uA) * H1("citizen:us") + (s - uB) * H1("age:adult"), (s/(s-uA)) * G2)
 ```
 There is a problem here in that `(s/(s-uA))` only cancels the first attribute, but not the other.
 That will cause this to not produce the unlock key.
-This resists collusion.  `s-u` is a secret, as is `(s/(s-uA))`, `u`, and `s`.  We multiply by `G2` before we give it to a user.
+This resists collusion.  `s-uA` is a secret, as is `(s/(s-uA))`, `uA`, and `s`.  We multiply by `G2` before we give it to a user.
 `s` is the master secret for the whole CA.  We must be very careful to not use an expression that can be solved for one of these values.
