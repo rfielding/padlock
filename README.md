@@ -346,3 +346,21 @@ There is a problem here in that `(s/(s-uA))` only cancels the first attribute, b
 That will cause this to not produce the unlock key.
 This resists collusion.  `s-uA` is a secret, as is `(s/(s-uA))`, `uA`, and `s`.  We multiply by `G2` before we give it to a user.
 `s` is the master secret for the whole CA.  We must be very careful to not use an expression that can be solved for one of these values.
+
+The bad thing that this allows is to make `f` public.
+It doesn't seem to be a disaster, but it does allow for this:
+
+```
+choose f=1
+
+e( f * H1("a") + f * H1("b"), s * G2)
+=
+e( s * H1("a") + s * H1("b"), f * G2)
+=
+e( s * H1("a") + s * H1("b"), G2)
+=
+ab1
+```
+
+ab1^n lets us unlock once, and easily exponentiate the value for any nonce.
+this is because they are all public.
