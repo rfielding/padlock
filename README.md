@@ -271,3 +271,17 @@ The reason to use Elliptic Curves with Parings and Point Hash, is to limit collu
 Collusion is to take an `a` issued to one user and a `b` from a different user, and forming `and(a,b)` with it.
 This is an unwanted form of privilege escalation.
 It is apparently possible to go further and limit collusion even on the same file (however, I cannot convince myself of this fact).
+
+## Resist Collusion TODO
+
+A choice has to be made whether to strongly resist collusion between users, or to have a secret file nonce.
+Collusion between users allows users to combine attributes in a way that escalates privilege.
+Not keeping the file nonce secret means that it's possible to use one file unlock against all possible nonces.
+It's not so much a privilege escalation as it is an annoyingly easy way for a user to efficiently leak unlocks.
+It appears that the best choice is to stop collusion to escalate privilege.
+A malicious, or careless, user can simply leak his certificate in any case.
+There isn't any way to avoid trying to put in code to refuse to do things that are cryptographically unenforceable.
+We should have certificate expirations, and try to make code honor them.
+And we should be able to honor revication lists, though they are also not cryptographically enforceable.
+
+![resist-collusion.png](resist-collusion.png)
