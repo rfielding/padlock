@@ -282,9 +282,64 @@ It appears that the best choice is to stop collusion to escalate privilege.
 A malicious, or careless, user can simply leak his certificate in any case.
 There isn't any way to avoid trying to put in code to refuse to do things that are cryptographically unenforceable.
 We should have certificate expirations, and try to make code honor them.
-And we should be able to honor revication lists, though they are also not cryptographically enforceable.
+And we should be able to honor revocation lists, though they are also not cryptographically enforceable.
 
 ![resist-collusion.png](resist-collusion.png)
 
 Currently, attributes are signed with `s`, which allows collusing users to add their attributes from their certificates together (the facts), because same facts currently have same value.
-But signing with `s-u`, where `s` is still the global CA secret, and `u` is a per-user secret nonce used during certificate generation.  The value `f` for a file was previously kept secret during the creation of a file, and only `f G2` was published as a public key.  But it's a better idea to use `(1 + u/(s-u)) G2` as the key to pair to attributes signed with `(s-u)`.  This will force the value `f` to be public though.  It's probably the best tradeoff, because as user keys leak; the damage must be contained to individual certificates, rather than the total of all leaked certificates. 
+But signing with `s-u`, where `s` is still the global CA secret, and `u` is a per-user secret nonce used during certificate generation.  The value `f` for a file was previously kept secret during the creation of a file, and only `f G2` was published as a public key.  But it's a better idea to use `(1 + u/(s-u)) G2` as the key to pair to attributes signed with `(s-u)`.  This will force the value `f` to be public though.  It's probably the best tradeoff, because as user keys leak; the damage must be contained to individual certificates, rather than the total of all leaked certificates.
+
+Examples:
+
+We are taking advantage of this pairing identity, where H1 is a point hash that is important to have, so that we don't try to do `H("fark") * G1` and not realize that this hash is trivially inverted because `H("fark")` is just a number, and it's easy to compute inverse numbers in this group.
+Instead, we use a point hash function `H1(str)` that hashes a string to a point where it is not feasible to figure out the number that inverts it.
+
+```
+e(a G1, b G2)
+=
+e(G1, G2)^{a*b}
+=
+e(b G1, a G2)
+```
+
+```
+# we can easily combine attributes from users,
+# because signatures are not watermarked.
+# This is a bad privilege escalation.
+
+# alice is an under-aged US citizen.
+# bob is an adult that is not a US citizen.
+# they can collude to unlock (and citizen:us age:adult),
+# even though neither one of them is authorized to do so.
+# They are willing to leak their certificate secrets
+# to each other to perform this privilege escalation.
+
+aliceIsCitizenUS = s * H1("citizen:us")
+bobIsAdult = s * H1("age:adult")
+filePub = f * G2
+
+e( aliceIsCitizenUS + bobIsAdult, filePub)
+=
+e( s * H1("citizen:us") + s * H1("age:adult"), f * G2)
+=
+e( s * (H1("citizen:us") + H1("age:adult")), f * G2)
+=
+e( H1("citizen:us")+H1("age:adult"), G2)^{s * f}
+```
+This doesn't resist collusion, because same facts produce the same values.
+But to resist collusion, use different user values
+
+```
+aliceIsCitizenUS = (s - uA) * H1("citizen:us")
+bobIsAdult = (s - uB) * H1("age:adult")
+alicePub = (s/(s-u)) * G2
+
+e( aliceIsCitizenUS + bobIsAdult, alicePub)
+=
+e( (s - uA) * H1("citizen:us") + (s - uB) * H1("age:adult"), (s/(s-uA)) * G2)
+=
+```
+There is a problem here in that `(s/(s-uA))` only cancels the first attribute, but not the other.
+That will cause this to not produce the unlock key.
+This resists collusion.  `s-u` is a secret, as is `(s/(s-uA))`, `u`, and `s`.  We multiply by `G2` before we give it to a user.
+`s` is the master secret for the whole CA.  We must be very careful to not use an expression that can be solved for one of these values.
