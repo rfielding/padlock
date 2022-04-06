@@ -285,3 +285,6 @@ We should have certificate expirations, and try to make code honor them.
 And we should be able to honor revication lists, though they are also not cryptographically enforceable.
 
 ![resist-collusion.png](resist-collusion.png)
+
+Currently, attributes are signed with `s`, which allows collusing users to add their attributes from their certificates together (the facts), because same facts currently have same value.
+But signing with `s-u`, where `s` is still the global CA secret, and `u` is a per-user secret nonce used during certificate generation.  The value `f` for a file was previously kept secret during the creation of a file, and only `f G2` was published as a public key.  But it's a better idea to use `(1 + u/(s-u)) G2` as the key to pair to attributes signed with `(s-u)`.  This will force the value `f` to be public though.  It's probably the best tradeoff, because as user keys leak; the damage must be contained to individual certificates, rather than the total of all leaked certificates. 
