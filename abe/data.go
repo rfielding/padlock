@@ -8,7 +8,7 @@ import (
 // This is a set of attested facts, including the signer key
 type Certificate struct {
 	Signer []byte            `json:"signer"`
-  Unwrap []byte            `json:"unwrap"` // replaces Pubf with collusion resistant unwrap
+  Unwrap []byte            `json:"secret"` // acts as the secret to generate keys
 	Facts  map[string][]byte `json:"facts"`
 }
 
