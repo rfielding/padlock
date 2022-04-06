@@ -8,6 +8,10 @@ and using BLS Elliptic Curves, so that there are proper point hashes.
 This means that we should be able to publicly encrypt to a set of attributes
 without involving the CA.  The CA will only be needed to issue certificates.
 
+![logic-gates.png](logic-gates.png)
+
+> The attributes form a restricted set of logic gates that produce a secret key.  If we don't have the proper signed facts, then there isn't enough information to produce any keys.  If we try to collude with other users, our shares of the key are incompatible to be added together.  This is an extension of public key cryptography in that we only need facts about us attested in certificates, and we can perform key derivations with it offline thereafter.
+
 # Smoke Test
 
 ```bash
