@@ -151,36 +151,40 @@ This is the essence of `cpabe` (`ciphertext policy attribute based encryption`).
 
 ```yaml
 # alice private Certificate
+alice private Certificate
 {
   "signer": "EmtgKiWirc0BgesmSuFfaF+cvhxjb6jpCNQ0ouKZKGZDgCGgJtPvhwol1d0LHTbGEdi+BxKsa6aliyftVdJ3PLdeJEZWCJ2WrByytzym2CVNc21iR8ZE3pdCKHikkhQRC3FOU/MgSY2ShluKFyJ5y3fJAjwD3BKzupNP+rWpAZ7srM3ybnChUjgw1TK7p4HXGX7DkeUS7jseNJm11x88pKVx9ANBynH7Y4tF5iH9d9wbiWE3ZFsajPKHE17h9e4S",
+  "unwrap": "BEeuLZNkCep0lmj7QNFSxEICRdL72I/qSOAW5KjINvIeSDXJ6BXRgxrMlGnrh3HQGFVcyr3sZabvq2QuE2uYtCM5JSp9QqfKwEN72Ki7DE7CJed7VXM2kbfIluuCYAtDCfzzrIsNVSBa3Kfz6YZGf5MCPUOHMqlxj+LIvbKeCAjlfEkTiUB/e4w+x0dpfRypEOQ7amYhMkqUCYhsMNAprc/fN7H7b2Lbfc76uezxZaNcNc8MVHlE/DD6FeR5Pa+C",
   "facts": {
-    "age:adult": "A35WCknGj0ld9O5NS1dn6BT43xcK0oI+zNOoJ6BXfw7lhMSM2wzJ3nH705NmOm05A5CcHNjH22/6pFLb5kXgWS220oKq3/uyS1GWEcylU610XnmIaMFFIvTo8OnLZuer",
-    "citizenship:!SA": "DQ0IKUWtzorMcvn2UZUeQPrk+P/smw1flpYV+GOAc81qqOcBExzE9ht6MT6+vwBKCrWHbYsuwxnBWLX76wAwAHLHQ/QwOKo9CuC491iCukeDF64KLmtwobbBOENpkycc",
-    "citizenship:US": "EiQhsVHvU18+IYUeUQb18ZxxQpzLNrYfLvqvfaQm3UZbzSB/Mi5EVBuj3ScsYFBZAw1MxLukZFai9Ak+pR/Shi1ZhZ5aCGjRQ6qJXKucroebimIdNV3YABmo3vB4vzRF",
-    "email:rob.fielding@gmail.com": "D8Jja59zg7zgE27eMexHEnG5WhQVcXrFgxHoSc828/blmr+L0g1zSXmAbHKp32OIAiKTPZNEi+JSGVAQFPkdeiCMQ3dDRLDix9p+2XWRUu74QjGf81JqeiNwVAOqf6/N"
+    "age:adult": "ETk7MIYKsIUmOYjBpMUpPxXB+0lqVOXbFEiqC4esSizy3B791VXZIVSH8yHAKZYfBkRV+rWaZEb/lXPCdDlx/ijhJSYPHeWe2EBhVdiTR2V/RutDcDijqD5Z83CtiZ/J",
+    "citizenship:!SA": "Ackq5CPlDgnisEUYzlLnJOMlMXqRH3wOtaVEoW5zyAi6E8uLK78xfiqiOg+gKR12Fg5H4+8CINkKQhYEWpHUswSaz/qMFFN0S9GpkNnCGMcOJ1vx6BNPGv4dnoE/0eC1",
+    "citizenship:US": "FXlQmipE26rT+xLCynNS7YT950OUrt7GZc6ufjR+LdgUx8giRVW1aRkqlyFFiUVrDO68+jcaXZHNtKtFDYQxxjn5Cc4l6Bg3OlPA4bykitCwrMvZ1vAmz6M5Kf0n0XMV",
+    "email:rob.fielding@gmail.com": "D6LqT8Xn//cCNd5Sbc0/2TlgXfJdV2YO4OTiivm4TFBHndH7TuW2RFOTufisTA/ABcQg/xl/HgtlqAICbnUTumMmPSKdjajwUFlB7nYtVf67sb13M2HOxRcVBJkRaHB/"
   }
 }
-# bob private Certificate
+bob private Certificate
 {
   "signer": "EmtgKiWirc0BgesmSuFfaF+cvhxjb6jpCNQ0ouKZKGZDgCGgJtPvhwol1d0LHTbGEdi+BxKsa6aliyftVdJ3PLdeJEZWCJ2WrByytzym2CVNc21iR8ZE3pdCKHikkhQRC3FOU/MgSY2ShluKFyJ5y3fJAjwD3BKzupNP+rWpAZ7srM3ybnChUjgw1TK7p4HXGX7DkeUS7jseNJm11x88pKVx9ANBynH7Y4tF5iH9d9wbiWE3ZFsajPKHE17h9e4S",
+  "unwrap": "CeUtMj239CCTUCLsggA72Wg1+fZ8Ja5nFJyXW8d/ctYbsMaENN5BprQwMR8qUp9tGAhSgMosMalCi5tVkF2Y6opXgy0dV0FMl6zJRwktp5oV0es0sPH41gCsMfojzzWbAvdN3D8Z3BpjusHO5S9MeWRM8I8ZP7Q8cqJdI8F/yMRhGkKPu7Z09+xDyRkaMMK2DdTV9xPGlZs1LqRgPUi7mhjUyy3bLrYM8+55zj6SA+XK/tiSYM4n2mOHRUYor4I/",
   "facts": {
-    "age:adult": "A35WCknGj0ld9O5NS1dn6BT43xcK0oI+zNOoJ6BXfw7lhMSM2wzJ3nH705NmOm05A5CcHNjH22/6pFLb5kXgWS220oKq3/uyS1GWEcylU610XnmIaMFFIvTo8OnLZuer",
-    "citizenship:!CN": "CfsjVKFLFkp6LMnSk5aAbMXEf1KxsG1YZAxz1WqN01yZ4wz35Kjo6wavOacPjgstESHGm7ja4usGNvRuXQ1+nUpeJGDJgEdBvTsVqZXXtGTIVoLGfw8PLmurQVlDgIzi",
-    "citizenship:!SA": "DQ0IKUWtzorMcvn2UZUeQPrk+P/smw1flpYV+GOAc81qqOcBExzE9ht6MT6+vwBKCrWHbYsuwxnBWLX76wAwAHLHQ/QwOKo9CuC491iCukeDF64KLmtwobbBOENpkycc",
-    "citizenship:IL": "EnUCmbWz6yj8E0UFy/PtgNHzoljTDyAwxbosWnWzYggyxj2aTZyANNdUWV/QXXspE+FwDsCi4KGNxSBw+nmLCKXX85thJHmWkB7bu1KTxZEAoTZQeE17aSdoq0kP/FiR",
-    "citizenship:NL": "Fexi7QRRv32RNwGYhgaEXzfzz5F/jpOrqe0LfMpbk8jouIf4y6fxQ+d2SMdOKWX1DK3v/COK6oU8bwi9RPTrum08Y9GZDw78lWz3E7tg/ccyVBgpyXBBTJ1Bu92qfCDN",
-    "email:bob@gmail.com": "Gb6k3VvMdcQg3jvijhPxMGw606VZbc2yraLVftjDaPAGUNBlEtLXf6nH814Uv0/HGY4xoB13l27pwKDPtAEWU3kJW0zYXqxflkQgzx9Mhh9FXc81nYMOgwU3Tvj8HqaQ"
+    "age:adult": "Aqh72ejfBL2lGfo6pj3pbmuVQ225k7WluRps0+Kv6iHm66eqChFg/GzWT7HngmJbBtz5BdYzjCB9esgdTJbFSSdSSL6+pFaqTnGnbzsSsO0712my0PsRDBZANsbgm9lk",
+    "citizenship:!CN": "Gdx9Yg4WHX8s5GpoAkoZ6i1o79ylf//IKn5aAHznr+i5KbLh541SeGKI2WbPWh9RBhFlZoJO7odAVO20d2SlBN5jvq+7jaaY0gBWBuaBHdy8bMNEFVNr9NnvTqcdcyfW",
+    "citizenship:!SA": "DiTHtrUHpABldkjhRNXAjb2BWUd9W5+IeQ8s0yNBpz5rVzuaXSY7VIYehr1FwfeAFwwUoEnsGfrjaozxWAmuRBwvcD87zjFN+P9bvpSTQo8WlQuQNeyB7xD/Le93sAwk",
+    "citizenship:IL": "A4E03f2rLbQ7VW4kGpaG5LUluZY6ITYSc7PjHHNAF2xhYAD2B6lrRpoWYRDxIhq5Ca79ULjrUNwu68EUr1i3GXZ+roFV5MefcvBAGR6LlGX1hdbQjSpP6r9ooToB/Dmy",
+    "citizenship:NL": "AaEH5abjP4XvarK9XeocaiIajR+vme61mMwPCNy+PLSddfe85g9dpTcBsvQPCyNDEeYr1taVDq4rju5Jp1+3hf8/FC2OzJXjHwkuzUEgwmmcHbTZCl37P11WQ2J8irFT",
+    "email:bob@gmail.com": "DWQe9y/6xzRUp39U1eL9SFJ17SwbjISKAjUWdJxY1uH92nfTlKXQUIWGqS8pRNhnFFJXZYT2qinDl2Dd3UViCoxdkC+3O/ejZXhsjNkpttPH+XEa5y19F8hLRUUhoVn8"
   }
 }
-# alice Unlocks
+alice Unlocks
 {
   "Read": "m5qNBafsNTvahPnBuzF4wpneMAG16XBQjdyInEh/kso=",
   "Write": "PwCSenGTRe3UqDFlmdOzKIV5h1R/iIQwaGEWH/oJZH4="
 }
-# bob Unlocks
+bob Unlocks
 {
   "Read": "m5qNBafsNTvahPnBuzF4wpneMAG16XBQjdyInEh/kso="
 }
+
 ```
 
 Every user that has genuine signed facts for the same signer will generate the same keys during _unlock_.
@@ -214,7 +218,7 @@ It is extremely important that:
 - Given public hash values, the CA need not be involved in padlock creation.
 - This is similar to Identity Based Encryption.  Exception IBE is one-attribute only.  IBE allows for encryption to be made to a chosen-text public key; such as an email address.  That way, encryption can be made to an email address, under the authority of a CA.  And the CA must issue the private key for that email address later.  This is the opposite of how public key crypto usually works, where there is no direct control over what the public key is, so that CAs need to explicitly sign public keys.  Because of this, we only need to trust that a CA won't issue a certificate with untruthful information in it.
 
-> Warning! The use of this construction limits possibilities of collusion to individual files.  Two rogue users colluding such as an `age:adult` colluding with a non-adult from `citizen:US`.  There are claims made in some cpabe implementations that collusion is cryptographically impossible in all cases.  They use Lagrange Polynomial interpolation to mix attributes.  But in my implementations, the many ways I have tried, I have found subtle ways to collude on the same file (only) under the same CA.  This limits the disaster that could be caused by rogue users to individual files.  But it's TBD to figure out to limit collusion cryptographically in every case.  The implementation of the curve hides the raw values of the points, which makes the Lagrange Polynomial interpolation difficult to implement.
+> There is now collusion resistance, in that attributes cannot be combined between users.  It is however possible to take shortcuts with the file nonce, so that a privileged user can unwrap a file with `f = 1`, and exponentiate the end result to the power of the publicly known nonce values.  But fortunately, this doesn't allow for any privilege escalations.
 
 # Implementation Issue
 
@@ -272,7 +276,7 @@ Collusion is to take an `a` issued to one user and a `b` from a different user, 
 This is an unwanted form of privilege escalation.
 It is apparently possible to go further and limit collusion even on the same file (however, I cannot convince myself of this fact).
 
-## Resist Collusion TODO
+## Resist Collusion
 
 A choice has to be made whether to strongly resist collusion between users, or to have a secret file nonce.
 Collusion between users allows users to combine attributes in a way that escalates privilege.

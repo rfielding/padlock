@@ -48,14 +48,32 @@ func (c *Certificate) Cert() (*ec.G2, error) {
 
 // Issue a certificate by calculating a map from known values to signed points,
 // where unknown values map to arbitrary points.
-func Issue(priv *ff.Scalar, facts []string) (Certificate, error) {
-	pubBytes := CA(priv).Bytes()
+func Issue(s *ff.Scalar, facts []string) (Certificate, error) {
+	// facts signed like:    (s-u)H1(f_i)
+	// unwrap is like: (s/(s-u))*G2
+  u := R()
+	sMinusU := new(ff.Scalar)
+	sMinusU.SetOne()
+	sMinusU.Mul(sMinusU, s)
+	sMinusU.Sub(sMinusU, u)
+
+  div := new(ff.Scalar)
+	div.Inv(sMinusU)
+	sDivsMinusU := new(ff.Scalar)
+	sDivsMinusU.SetOne()
+	sDivsMinusU.Mul(sDivsMinusU, s)
+	sDivsMinusU.Mul(sDivsMinusU, div)
+	unwrapBytes := CA(sDivsMinusU).Bytes()
+
+	// sign with bytes (priv-u)
+	pubBytes := CA(s).Bytes()
 	cert := Certificate{
 		Signer: pubBytes,
+		Unwrap: unwrapBytes,
 		Facts:  make(map[string][]byte),
 	}
 	for j := 0; j < len(facts); j++ {
-		cert.Facts[facts[j]] = H1n(facts[j], priv).Bytes()
+		cert.Facts[facts[j]] = H1n(facts[j],sMinusU).Bytes()
 	}
 	return cert, nil
 }
@@ -144,9 +162,7 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 		}
 		sp.Unlocks[u].K = answer
 
-		fP := ec.G2Generator()
-		fP.ScalarMult(f, fP)
-		sp.Unlocks[u].Pubf = fP.Bytes()
+    sp.Unlocks[u].F = f
 	}
 	sp.CAPub = capub.Bytes()
 	return sp, nil
@@ -180,12 +196,14 @@ func (sp *Spec) Unlock(cert Certificate) (map[string][]byte, error) {
 				}
 				signedAttrs = append(signedAttrs, val) // [] s*H1(atr_i) * f
 			}
-			filepub := ec.G2Generator()
-			err := filepub.SetBytes(sp.Unlocks[u].Pubf)
+			unwrap := ec.G2Generator()
+			err := unwrap.SetBytes(cert.Unwrap)
 			if err != nil {
 				return nil, fmt.Errorf("filepub.SetBytes: %v", err)
 			}
-			answer, err := G1SumPairXor(signedAttrs, filepub, sp.Unlocks[u].K)
+			f := sp.Unlocks[u].F
+			unwrap.ScalarMult(f, unwrap)
+			answer, err := G1SumPairXor(signedAttrs, unwrap, sp.Unlocks[u].K)
 			if err != nil {
 				return nil, fmt.Errorf("G1SumPairXor: %v", err)
 			}

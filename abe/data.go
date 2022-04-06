@@ -8,6 +8,7 @@ import (
 // This is a set of attested facts, including the signer key
 type Certificate struct {
 	Signer []byte            `json:"signer"`
+  Unwrap []byte            `json:"unwrap"` // replaces Pubf with collusion resistant unwrap
 	Facts  map[string][]byte `json:"facts"`
 }
 
@@ -25,7 +26,7 @@ type Unlock struct {
 	Key  string   `json:"key,omitempty"`
 	And  []string `json:"and,omitempty"`
 	K    []byte   `json:"k,omitempty"` // The secret! needs xor vs target
-	Pubf []byte   `json:"pubf,omitempty"`
+  F    *ff.Scalar   `json:"f,omitempty"`
 }
 
 type Case struct {
