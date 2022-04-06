@@ -1,0 +1,3 @@
+cmd/padlock/certs/*
+cmd/padlock/padlocks/*
+cmd/padlock/padlock
