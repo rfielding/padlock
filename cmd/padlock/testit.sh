@@ -4,8 +4,15 @@
 cd `dirname $0`
 #go mod vendor
 #go mod tidy
-rm ./padlock
-go build
+if [ -f ./padlock ]
+then
+  rm ./padlock
+else
+  go mod tidy
+  mkdir users
+  mkdir padlocks
+fi
+go build -o padlock
 
 # Create Alice and Bob with the CA
 ./padlock --priv farkfark --facts ./requests/bob.request.json > ./users/bob.cert.json

@@ -12,30 +12,6 @@ import (
 	"sort"
 )
 
-// !!! Problem: this curve keeps x,y,z members private, so I can't extract them
-// !!! I will need another way to blind the certificates
-// L[v] = sum_j [ Y_j * prod_i^{i != j}[(x - x_j)/(x_i - x_j)]
-func Lagrange(v *ff.Scalar, x []*ff.Scalar, y []*ff.Scalar) *ff.Scalar {
-	sum := new(ff.Scalar)
-	for j := 0; j < len(y); j++ {
-		prod := new(ff.Scalar)
-		prod.SetOne()
-		prod.Mul(prod, y[j])
-		for i := 0; i < len(x); i++ {
-			if i != j {
-				num := new(ff.Scalar)
-				num.Sub(v, x[j])
-				div := new(ff.Scalar)
-				div.Sub(x[i], x[j])
-				div.Inv(div)
-				prod.Mul(prod, num)
-				prod.Mul(prod, div)
-			}
-		}
-		sum.Add(sum, prod)
-	}
-	return sum
-}
 
 func (c *Certificate) Cert() (*ec.G2, error) {
 	p := ec.G2Generator()
@@ -63,13 +39,12 @@ func Issue(s *ff.Scalar, facts []string) (Certificate, error) {
 	sDivsMinusU.SetOne()
 	sDivsMinusU.Mul(sDivsMinusU, s)
 	sDivsMinusU.Mul(sDivsMinusU, div)
-	unwrapBytes := CA(sDivsMinusU).Bytes()
 
 	// sign with bytes (priv-u)
 	pubBytes := CA(s).Bytes()
 	cert := Certificate{
 		Signer: pubBytes,
-		Unwrap: unwrapBytes,
+		Secret: sDivsMinusU,
 		Facts:  make(map[string][]byte),
 	}
 	for j := 0; j < len(facts); j++ {
@@ -162,7 +137,7 @@ func AsSpec(s string, capub *ec.G2, targets map[string][]byte) (Spec, error) {
 		}
 		sp.Unlocks[u].K = answer
 
-    sp.Unlocks[u].F = f
+		sp.Unlocks[u].PubF = CA(f).Bytes()
 	}
 	sp.CAPub = capub.Bytes()
 	return sp, nil
@@ -196,14 +171,14 @@ func (sp *Spec) Unlock(cert Certificate) (map[string][]byte, error) {
 				}
 				signedAttrs = append(signedAttrs, val) // [] s*H1(atr_i) * f
 			}
-			unwrap := ec.G2Generator()
-			err := unwrap.SetBytes(cert.Unwrap)
+			filepub := ec.G2Generator()
+			err := filepub.SetBytes(sp.Unlocks[u].PubF)
 			if err != nil {
 				return nil, fmt.Errorf("filepub.SetBytes: %v", err)
 			}
-			f := sp.Unlocks[u].F
-			unwrap.ScalarMult(f, unwrap)
-			answer, err := G1SumPairXor(signedAttrs, unwrap, sp.Unlocks[u].K)
+		        fPub := ec.G2Generator()
+        		fPub.ScalarMult(cert.Secret, fPub)
+			answer, err := G1SumPairXor(signedAttrs, fPub, sp.Unlocks[u].K)
 			if err != nil {
 				return nil, fmt.Errorf("G1SumPairXor: %v", err)
 			}

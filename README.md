@@ -282,20 +282,10 @@ It is apparently possible to go further and limit collusion even on the same fil
 
 ## Resist Collusion
 
-A choice has to be made whether to strongly resist collusion between users, or to have a secret file nonce.
-Collusion between users allows users to combine attributes in a way that escalates privilege.
-Not keeping the file nonce secret means that it's possible to use one file unlock against all possible nonces.
-It's not so much a privilege escalation as it is an annoyingly easy way for a user to efficiently leak unlocks.
-It appears that the best choice is to stop collusion to escalate privilege.
-A malicious, or careless, user can simply leak his certificate in any case.
-There isn't any way to avoid trying to put in code to refuse to do things that are cryptographically unenforceable.
-We should have certificate expirations, and try to make code honor them.
-And we should be able to honor revocation lists, though they are also not cryptographically enforceable.
+In order to resist collusion, attributes are signed with `(s-u)`, the file public key `(f G2)` is a secret, but it is multiplied times `(s/(s-u))`,
+and this secret is known to the certificate holder.  This is not sufficient to collude with other users.
 
 ![resist-collusion.png](resist-collusion.png)
-
-Currently, attributes are signed with `s`, which allows collusing users to add their attributes from their certificates together (the facts), because same facts currently have same value.
-But signing with `s-u`, where `s` is still the global CA secret, and `u` is a per-user secret nonce used during certificate generation.  The value `f` for a file was previously kept secret during the creation of a file, and only `f G2` was published as a public key.  But it's a better idea to use `(1 + u/(s-u)) G2` as the key to pair to attributes signed with `(s-u)`.  This will force the value `f` to be public though.  It's probably the best tradeoff, because as user keys leak; the damage must be contained to individual certificates, rather than the total of all leaked certificates.
 
 Examples:
 
@@ -355,20 +345,3 @@ That will cause this to not produce the unlock key.
 This resists collusion.  `s-uA` is a secret, as is `(s/(s-uA))`, `uA`, and `s`.  We multiply by `G2` before we give it to a user.
 `s` is the master secret for the whole CA.  We must be very careful to not use an expression that can be solved for one of these values.
 
-The bad thing that this allows is to make `f` public.
-It doesn't seem to be a disaster, but it does allow for this:
-
-```
-choose f=1
-
-e( f * H1("a") + f * H1("b"), s * G2)
-=
-e( s * H1("a") + s * H1("b"), f * G2)
-=
-e( s * H1("a") + s * H1("b"), G2)
-=
-ab1
-```
-
-ab1^n lets us unlock once, and easily exponentiate the value for any nonce.
-this is because they are all public.
