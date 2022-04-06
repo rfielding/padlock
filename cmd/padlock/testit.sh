@@ -19,6 +19,8 @@ cat ./users/alice.cert.json
 echo bob private Certificate
 cat ./users/bob.cert.json
 
+echo blueprint
+cat ./blueprints/isAdultCit.blueprint.json
 echo alice Unlocks
 ./padlock --cert ./users/alice.cert.json --padlock ./padlocks/isAdultCit.padlock.json
 echo bob Unlocks
