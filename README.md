@@ -326,7 +326,7 @@ e( s * (H1("citizen:us") + H1("age:adult")), f * G2)
 =
 e( H1("citizen:us")+H1("age:adult"), G2)^{s * f}
 ```
-This doesn't resist collusion, because same facts produce the same values.
+The scheme above doesn't resist collusion, because same facts produce the same values.
 But to resist collusion, use different user values
 
 ```
@@ -337,9 +337,11 @@ bobPub = (s/(s-uB)) * G2
 
 e( aliceIsCitizenUS + bobIsAdult, alicePub)
 =
-e( (s - uA) * H1("citizen:us") + (s - uB) * H1("age:adult"), (s/(s-uA)) * G2)
+e( (s - uA) * H1("citizen:us") + (s - uB) * H1("age:adult"), f * (s/(s-uA))*G2)
 =
+e( s * H1("citizen:us") + s*(s - uB)/(s - uA) * H1("age:adult"), f * G2)
 ```
+
 There is a problem here in that `(s/(s-uA))` only cancels the first attribute, but not the other.
 That will cause this to not produce the unlock key.
 This resists collusion.  `s-uA` is a secret, as is `(s/(s-uA))`, `uA`, and `s`.  We multiply by `G2` before we give it to a user.
