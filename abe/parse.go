@@ -12,7 +12,6 @@ import (
 	"sort"
 )
 
-
 func (c *Certificate) Cert() (*ec.G2, error) {
 	p := ec.G2Generator()
 	err := p.SetBytes(c.Signer)
@@ -27,13 +26,13 @@ func (c *Certificate) Cert() (*ec.G2, error) {
 func Issue(s *ff.Scalar, facts []string) (Certificate, error) {
 	// facts signed like:    (s-u)H1(f_i)
 	// unwrap is like: (s/(s-u))*G2
-  u := R()
+	u := R()
 	sMinusU := new(ff.Scalar)
 	sMinusU.SetOne()
 	sMinusU.Mul(sMinusU, s)
 	sMinusU.Sub(sMinusU, u)
 
-  div := new(ff.Scalar)
+	div := new(ff.Scalar)
 	div.Inv(sMinusU)
 	sDivsMinusU := new(ff.Scalar)
 	sDivsMinusU.SetOne()
@@ -42,13 +41,18 @@ func Issue(s *ff.Scalar, facts []string) (Certificate, error) {
 
 	// sign with bytes (priv-u)
 	pubBytes := CA(s).Bytes()
+	secretBytes, err := sDivsMinusU.MarshalBinary()
+	if err != nil {
+		return Certificate{}, err
+	}
 	cert := Certificate{
 		Signer: pubBytes,
 		Secret: sDivsMinusU,
+		SecretBytes: secretBytes,
 		Facts:  make(map[string][]byte),
 	}
 	for j := 0; j < len(facts); j++ {
-		cert.Facts[facts[j]] = H1n(facts[j],sMinusU).Bytes()
+		cert.Facts[facts[j]] = H1n(facts[j], sMinusU).Bytes()
 	}
 	return cert, nil
 }
@@ -151,6 +155,10 @@ func (sp *Spec) Unlock(cert Certificate) (map[string][]byte, error) {
 	if err != nil {
 		return granted, fmt.Errorf("capub.SetBytes(s.Unlocks[u].Pubf): %v", err)
 	}
+	if cert.Secret == nil {
+		cert.Secret = new(ff.Scalar)
+		cert.Secret.SetBytes(cert.SecretBytes)
+	}
 	for u, _ := range sp.Unlocks {
 		// Are all the facts we need in here?
 		hasAll := true
@@ -176,8 +184,8 @@ func (sp *Spec) Unlock(cert Certificate) (map[string][]byte, error) {
 			if err != nil {
 				return nil, fmt.Errorf("filepub.SetBytes: %v", err)
 			}
-		        fPub := ec.G2Generator()
-        		fPub.ScalarMult(cert.Secret, fPub)
+			fPub := ec.G2Generator()
+			fPub.ScalarMult(cert.Secret, fPub)
 			answer, err := G1SumPairXor(signedAttrs, fPub, sp.Unlocks[u].K)
 			if err != nil {
 				return nil, fmt.Errorf("G1SumPairXor: %v", err)

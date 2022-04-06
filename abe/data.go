@@ -8,7 +8,8 @@ import (
 // This is a set of attested facts, including the signer key
 type Certificate struct {
 	Signer []byte            `json:"signer"`
-	Secret *ff.Scalar        `json:"secret"` // acts as the secret to generate keys
+	Secret *ff.Scalar        `json:"secret,omitempty"` // acts as the secret to generate keys
+	SecretBytes []byte       `json:"secretBytes"` // acts as the secret to generate keys
 	Facts  map[string][]byte `json:"facts"`
 }
 
@@ -25,7 +26,7 @@ type Spec struct {
 type Unlock struct {
 	Key  string   `json:"key,omitempty"`
 	And  []string `json:"and,omitempty"`
-	K    []byte   `json:"k,omitempty"` // The secret! needs xor vs target
+	K    []byte   `json:"-"` // The secret! needs xor vs target
 	PubF []byte   `json:"pubf,omitempty"`
 }
 
